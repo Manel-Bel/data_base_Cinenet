@@ -3,31 +3,48 @@ CREATE DATABASE CineNet;
 
 DROP TABLE IF EXISTS Users;
 DROP TABLE IF EXISTS Role;
+DROP TABLE IF EXISTS Amis;
+DROP TABLE IF EXISTS Follow;
 DROP TABLE IF EXISTS Publication;
 DROP TABLE IF EXISTS Archive;
 DROP TABLE IF EXISTS Film;
 DROP TABLE IF EXISTS Serie;
 DROP TABLE IF EXISTS EventParticulier;
---  Il sera possible à un utilisateur de suivre ou bien d’être ami avec une autre entité du réseau. Notez que la relation d’amitié est symétrique, mais qu’il est possible que A suive B sans que B suive A (sur le modèle du follows de Instagram)
-DROP TABLE IF EXISTS Follow;
-DROP TABLE IF EXISTS Friendship;
 DROP TABLE IF EXISTS Sujet_publication;
 DROP TABLE IF EXISTS Reaction;
 DROP TABLE IF EXISTS Discussion;
+DROP TABLE if EXISTS MotsCles;
 
 CREATE TABLE User (
 id serial PRIMARY KEY,
 username  VARCHAR(50) NOT NULL UNIQUE,
 password  VARCHAR(128) NOT NULL,
-email     VARCHAR(75),
-firstname VARCHAR(30),
-lastname  VARCHAR(30)
+email  VARCHAR(75),
+role _id INTEGER REFERENCES Role(id) ON DELETE SET NULL
 );
 
 CREATE TABLE Role (
-roleId SERIAL PRIMARY KEY,
-roleName VARCHAR(30) NOT NULL
+    id serial PRIMARY KEY,
+    name VARCHAR(30) NOT NULL UNIQUE
 );
+
+-- symétrique
+CREATE TABLE Amis(
+    user1 INTEGER REFERENCES User(id),
+    user2 INTEGER REFERENCES User(id),
+    constraint pk_Amis primary key (user1, user2)
+);
+
+CREATE TABLE Follow (
+    userId INTEGER REFERENCES User(id),
+    folowerid  INTEGER REFERENCES User(id),
+    PRIMARY KEY (userId, folowerid),
+    CONSTRAINT follow_self CHECK (userId != folowerid)
+);
+
+CREATE  VIEW UtilisateursSuivis AS
+SELECT DISTINCT u.* FROM User u INNER JOIN Follow f ON u.Id = f.folowerid WHERE f.userId = ?;
+
 
 -- One publication can be linked to one or several films.
 CREATE TABLE Filme_Publication (
@@ -39,51 +56,38 @@ publiId INTEGER REFERENCES Publication(publiId)
 ALTER TABLE Filme_Publication ADD CONSTRAINT film_publi_unique UNIQUE (filmId, publiId);
 
 CREATE TABLE Film (
-id          SERIAL PRIMARY KEY,
-titre       VARCHAR(64) NOT NULL,
-resume      TEXT,
-realisation DATE,
-duree       INTEGER, -- en minutes
-genre       VARCHAR(32),
-FOREIGN KEY (realisation) REFERENCES Realisation(annee)
+    id          SERIAL PRIMARY KEY,
+    titre       VARCHAR(64) NOT NULL,
+    resume      TEXT,
+    realisation DATE,
+    duree       INTEGER, -- en minutes
+    genre       VARCHAR(32)
 );
 
 
 CREATE TABLE Serie (
-id          SERIAL PRIMARY KEY,
-numero      SMALLINT CHECK (numero > 0),
-saison      SMALLINT,
-titre       VARCHAR(64) NOT NULL,
-nbreEpisodes SMALLINT,
-dureeParEpisode INTEGER, -- en minutes
-datePremiere DATE,
-genre        VARCHAR(32)
+    id          SERIAL PRIMARY KEY,
+    numero      SMALLINT CHECK (numero > 0),
+    saison      SMALLINT,
+    titre       VARCHAR(64) NOT NULL,
+    nbreEpisodes SMALLINT,
+    dureeParEpisode INTEGER, -- en minutes
+    datePremiere DATE,
+    genre        VARCHAR(32)
 );
 
 ALTER TABLE Serie ADD CONSTRAINT unique_serie UNIQUE (numero, saison);
 
-CREATE TABLE Realisation (
-annee INTEGER PRIMARY KEY
+CREATE TABLE GenreCinemato (
+    idGenre SERIAL PRIMARY KEY,
+    nom   VARCHAR(32) NOT NULL
 );
 
-
--- d’être ami avec une autre entité du réseau. Notez que la relation d’amitié est symétrique
-CREATE TABLE Friendship  (
-user1 INTEGER REFERENCES User(id),
-user2 INTEGER REFERENCES User(id),
-constraint pk_friendship primary key (user1, user2)
+CREATE TABLE SousGenreCinemato (
+idSousGenre SERIAL PRIMARY KEY,
+idGenre       INTEGER REFERENCES GenreCinemato(idGenre),
+nom         VARCHAR(32) NOT NULL
 );
-
-
-CREATE TABLE Follow (
-userId INTEGER REFERENCES User(id),
-folowerid  INTEGER REFERENCES User(id),
-PRIMARY KEY (userId, folowerid),
-CONSTRAINT follow_self CHECK (userId != folowerid)
-);
-
-CREATE  VIEW UtilisateursSuivis AS
-SELECT DISTINCT u.* FROM User u INNER JOIN Follow f ON u.Id = f.folowerid WHERE f.userId = ?;
 
 
 CREATE TABLE SujetPublication (
@@ -91,100 +95,100 @@ idSujet INTEGER PRIMARY KEY REFERENCES Subject(id),
 description  VARCHAR(1024) NOT NULL
 );
 
-CREATE TABLE Tag (
-idTag SERIAL PRIMARY KEY,
-nom VARCHAR(32) UNIQUE
+CREATE TABLE MotsCles (
+idMotCle SERIAL PRIMARY KEY,
+motCle VARCHAR(32) UNIQUE
 );
 
+CREATE TABLE CategorieDiscussion (
+    idCategorie SERIAL PRIMARY KEY,
+    nomCategorie   VARCHAR(32) NOT NULL
+);
 
 CREATE TABLE Discussion (
-    id DISCUSSION SERIAL PRIMARY KEY,
-    créateur INTEGER REFERENCES User(id),
-    nom VARCHAR(255) NOT NULL,
-    description TEXT
+    idDiscussion SERIAL PRIMARY KEY,
+    idCreateur INTEGER REFERENCES User(id),
+    titreDiscussion VARCHAR(255) NOT NULL,
+    description TEXT,
+    idCategorie FOREIGN KEY REFERENCES CategorieDiscussion(idCategorie),
 );
 
 
 CREATE TABLE Publication (
     idPublication SERIAL PRIMARY KEY,
-    discussion INTEGER REFERENCES Discussion(id),
     auteur INTEGER REFERENCES User(id),
+    -- discussion INTEGER REFERENCES Discussion(id),
     titre VARCHAR(100) NOT NULL,
     contenu TEXT NOT NULL,
-    dSujet INTEGER REFERENCES Subject(id),
-    idTag INTEGER REFERENCES Tag(id),
-    datePublication IMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    visibilite INTEGER NOT NULL CHECK (visibilite BETWEEN  0 AND 2),
+    idSujet INTEGER REFERENCES Subject(id),
+    -- idMotsCles INTEGER REFERENCES MotsCles(idMotCle),
+    datePublication TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    idPublicationParent  INTEGER REFERENCES Publication(idPublication) --NULL si publication premier niveau
     FOREIGN KEY (auteur) REFERENCES User(id) ON DELETE CASCADE
 );
 
+CREATE TABLE MotsClesPublication (
+    idPubliMotCle SERIAL PRIMARY KEY,
+    idPublication INTEGER REFERENCES Publication(idPublication),
+    idMotCle INTEGER REFERENCES MotsCles(idMotCle),
+);
 
 CREATE TABLE EventParticulier(
    idEvent SERIAL PRIMARY KEY,
-   eventDate DATE NOT NULL,                   
-   eventlieu VARCHAR(255) NOT NULL,              
-   eventNom VARCHAR(255) NOT NULL,
+   dateEvent DATE NOT NULL,                   
+   lieuEvent VARCHAR(255) NOT NULL,              
+   nomEvent VARCHAR(255) NOT NULL,
    nbPlaceDispo INTEGER NOT NULL,     
    nbPlaceReserve INTEGER NOT NULL DEFAULT 0,
-   nbPlaceRestante INTEGER NOT NULL DEFAULT nbPlaceDispo,
    idOrganisateur INTEGER REFERENCES User(id)
-   idAuteur INTEGER REFERENCES User(id)
+   idAuteur INTEGER REFERENCES User(id),
+   liens_web TEXT[]
 );
 
-CREATE  VIEW EvenementPublic AS
-SELECT * FROM EventParticulier WHERE idAuteur IS NOT NULL;
-ALTER TABLE EventParticulier ADD CONSTRAINT chk_eventpublic CHECK (nbPlaceDispo >= nbPlaceReserve);
+CREATE TABLE ParticipationEvent(
+   idUser INTEGER REFERENCES User(id),     -- L'utilisateur s'inscrit à l'événement
+   idEvent INTEGER REFERENCES EventParticulier(id), -- L'événement auquel il s'inscrit
+   PRIMARY KEY(idUser, idEvent)
+);
 
--- Trigger pour mettre à jour la place restante lors de l'insertion ou modification d'un événement particulier
-CREATE TABLE Inscription AS
-SELECT * FROM EvenementPublic;
-ALTER TABLE Inscription RENAME TO Participant;
-ADD COLUMN idUser INTEGER REFERENCES User(id);
 
--- On ajoute une clé étrangère pour que l'on puisse associer un utilisateur à plusieurs événements.
-ALTER TABLE Participant ADD COLUMN idEvent INTEGER REFERENCES EventParticulier(idEvent);
-
--- On crée la vue "MesEvents" qui affiche uniquement les événements organisés par l'utilisateur connecté.
-CREATE OR REPLACE VIEW MesEvents AS SELECT * FROM Participant WHERE idEventAuteur = current_user;
-
--- La vue "Inscriptions" affiche tous les inscrits à un événement donné.
-CREATE VIEW Inscriptions AS 
+-- La vue "ParticipationEvent" affiche tous les inscrits à un événement donné.
+CREATE VIEW ParticipationEvents AS 
 SELECT P.* FROM Participant P INNER JOIN EventParticulier E on P.idEvent=E.idEvent;
 
+ALTER TABLE ParticipationEvents ADD CONSTRAINT check_nbplace CHECK (nbPlaceDispo - nbPlaceReserve >=  0);
 
-
-ALTER TABLE Inscription ADD CONSTRAINT check_nbplace CHECK (nbPlaceDispo - nbPlaceReserve >=  0);
-
-SELECT * FROM EventParticulier e INNER JOIN Inscription i ON e.id = i.idEvent WHERE i.idUser=?;
+SELECT * FROM EventParticulier e INNER JOIN ParticipationEvents i ON e.id = i.idEvent WHERE i.idUser=?;
 
 
 CREATE TABLE Archive (
-idArchive SERIAL PRIMARY KEY,
-dateArchivage DATE NOT NULL,
-raison VARCHAR(255) NOT NULL,
-publication INTEGER REFERENCES Publication(id)
+    idArchive SERIAL PRIMARY KEY,
+    dateArchivage DATE NOT NULL,
+    raison VARCHAR(255) NOT NULL,
+    publication INTEGER REFERENCES Publication(id)
 );
 
 
 CREATE TABLE Commentaire (
     idCommentaire SERIAL PRIMARY KEY,
-    publicationid INTEGER REFERENCES Publication(publiId),
+    idPubli INTEGER REFERENCES Publication(publiId),
     auteur INTEGER REFERENCES User(id),
     contenu TEXT NOT NULL,
     dateCommentaire DATE NOT NULL
 );
 
+CREATE TYPE TypeReaction  as ENUM ('Like', 'Dislike', 'Neutre', 'Fun', 'Sad' ,'Angry');
+
 CREATE TABLE Reaction(
-idReaction SERIAL PRIMARY KEY,
-publication INTEGER REFERENCES Publication(id),
-utilisateur INTEGER REFERENCES User(id),
-type CHAR(1) CHECK (type in ('J', 'D')), -- J pour J'aime / D pour J'dislike
-FOREIGN KEY (utilisateur, publication) REFERENCES User(id, idPublication)
+    idReaction SERIAL PRIMARY KEY,
+    idPubli INTEGER REFERENCES Publication(id),
+    idUser INTEGER REFERENCES User(id),
+    type TypeReaction,
+    FOREIGN KEY (idUser, idPubli)  Publication(auteur, idPublication) ON DELETE CASCADE
 );
 
--- typeReacti  is an ENUM of ('Like', 'Dislike');
 
--- La table Message correspond à un message envoyé par un utilisateur à un autre utilisateur.
+-- message envoyé par un utilisateur à un autre.
 CREATE TABLE Message (
     id SERIAL PRIMARY KEY,
     expéditeur INTEGER REFERENCES User(id),
@@ -192,11 +196,10 @@ CREATE TABLE Message (
     contenu TEXT NOT NULL
 );
 
-CREATE TABLE  Notification (
+CREATE TABLE Notification (
     id SERIAL PRIMARY KEY,
     notificationType NotificationType NOT NULL, -- Type de la notification : newFriendRequest, friendAccepted, friendShipRejected
     vue BOOLEAN DEFAULT FALSE, -- False signifie que la notification n'a pas été vu par l'utilisateur
-                                -- True signifie que la notification a déjà été vue par l'utilisateur
     dateEnvoie DATE NOT NULL,
     publication VueSurPublication INTEGER, -- Si cette colonne est null c'est qu'il s'agit d'une notification de like ou de dislike sur une public
     expéditeur INTEGER REFERENCES User(id),
@@ -204,23 +207,5 @@ CREATE TABLE  Notification (
     typeNotification ENUM('AjoutPublication','Suivi')
 );
 
-
-CREATE TABLE  LikeShare (
-idlIKESHARING SERIAL PRIMARY KEY,
-user_id INTEGER REFERENCES User(id),
-date DATETIME NOT NULL,
-typeReacti typeReacti NOT NULL,
-publication_id INTEGER REFERENCES Publication(id)
-);
-
-
-
 ---------------------------------------------------------
 
-
-
--- status ENUM('pending', 'accepted','refused')
---     -- pending: the user1 has sent a request to user2 and is waiting for an answer.
---     -- accepted : user1 has asked user2 and user2 has answered by accepting.
---     -- refused : user1 has asked user2 and user2 has answered by refusing.
--- );
