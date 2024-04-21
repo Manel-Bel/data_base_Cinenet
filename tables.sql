@@ -42,8 +42,8 @@ CREATE TABLE Follow (
     CONSTRAINT follow_self CHECK (userId != folowerid)
 );
 
-CREATE  VIEW UtilisateursSuivis AS
-SELECT DISTINCT u.* FROM User u INNER JOIN Follow f ON u.Id = f.folowerid WHERE f.userId = ?;
+CREATE VIEW UtilisateursSuivis AS
+SELECT DISTINCT u.* FROM User u INNER JOIN Follow f ON u.Id = f.folowerid;
 
 
 -- One publication can be linked to one or several films.
