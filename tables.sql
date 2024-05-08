@@ -1,61 +1,78 @@
-CREATE DATABASE CineNet;
-\c cineNet;
+-- CREATE DATABASE CineNet;
+\c cinenet;
 
-DROP TABLE IF EXISTS Users;
-DROP TABLE IF EXISTS Role;
+-- DROP TABLE IF EXISTS Role;
 DROP TABLE IF EXISTS Amis;
-DROP TABLE IF EXISTS Follow;
-DROP TABLE IF EXISTS Publication;
+DROP TABLE IF EXISTS Follower;
 DROP TABLE IF EXISTS Archive;
 DROP TABLE IF EXISTS Film;
 DROP TABLE IF EXISTS Serie;
-DROP TABLE IF EXISTS EventParticulier;
-DROP TABLE IF EXISTS Sujet_publication;
 DROP TABLE IF EXISTS Reaction;
-DROP TABLE IF EXISTS Discussion;
+DROP TABLE IF EXISTS GenreCinemato;
+DROP TABLE IF EXISTS MotsClesPublication;
 DROP TABLE if EXISTS MotsCles;
+DROP TABLE IF EXISTS ParticipationEvent;
+DROP TABLE IF EXISTS InteresseEvent;
+DROP TABLE IF EXISTS HistoriquePublication;
+DROP TABLE IF EXISTS HistoriqueReaction;
+DROP TABLE IF EXISTS EventParticulier;
+DROP TABLE IF EXISTS Publication;
+DROP TABLE IF EXISTS SujetPublication;
+DROP TABLE IF EXISTS Discussion;
+DROP TABLE IF EXISTS CategorieDiscussion;
+DROP TABLE IF EXISTS Message;
+DROP TABLE IF EXISTS Users;
 
-CREATE TABLE User (
-id serial PRIMARY KEY,
-username  VARCHAR(50) NOT NULL UNIQUE,
-password  VARCHAR(128) NOT NULL,
-email  VARCHAR(75),
-role _id INTEGER REFERENCES Role(id) ON DELETE SET NULL
-);
 
-CREATE TABLE Role (
+
+--  _id INTEGER REFERENCES Role(id) ON DELETE SET NULL/enuuuum c'est comme on veut 
+
+CREATE TYPE TypeRole as ENUM ('lamda', 'Realisateur', 'acteur', 'organisateurSalle', 'Cinema' ,'Club');
+
+CREATE TABLE Users(
     id serial PRIMARY KEY,
-    name VARCHAR(30) NOT NULL UNIQUE
+    username  VARCHAR(50) NOT NULL UNIQUE,
+    password  VARCHAR(128) NOT NULL,
+    email  VARCHAR(75),
+    role TypeRole
 );
+
 
 -- symétrique
 CREATE TABLE Amis(
-    user1 INTEGER REFERENCES User(id),
-    user2 INTEGER REFERENCES User(id),
-    constraint pk_Amis primary key (user1, user2)
+    user1 INTEGER REFERENCES Users(id),
+    user2 INTEGER REFERENCES Users(id),
+    PRIMARY KEY (user1, user2),
+    CONSTRAINT amis_self  CHECK (user1 != user2)
 );
 
-CREATE TABLE Follow (
-    userId INTEGER REFERENCES User(id),
-    folowerid  INTEGER REFERENCES User(id),
-    PRIMARY KEY (userId, folowerid),
-    CONSTRAINT follow_self CHECK (userId != folowerid)
+CREATE TABLE Follower(
+    id INTEGER REFERENCES Users(id),
+    folower  INTEGER REFERENCES Users(id),
+    PRIMARY KEY (id, folower),
+    CONSTRAINT follow_self CHECK (id != folower)
 );
 
-CREATE VIEW UtilisateursSuivis AS
-SELECT DISTINCT u.* FROM User u INNER JOIN Follow f ON u.Id = f.folowerid;
+-- CREATE VIEW UtilisateursSuivis AS
+-- SELECT DISTINCT u.* FROM Users u INNER JOIN Follower f ON u.id = f.folowerid;
 
 
 -- One publication can be linked to one or several films.
-CREATE TABLE Filme_Publication (
-filmPubliId SERIAL PRIMARY KEY,
-filmId INTEGER REFERENCES Film(id),
-publiId INTEGER REFERENCES Publication(publiId)
+-- CREATE TABLE Filme_Publication (
+-- filmPubliId SERIAL PRIMARY KEY,
+-- filmId INTEGER REFERENCES Film(id),
+-- publiId INTEGER REFERENCES Publication(publiId)
+-- );
+
+-- ALTER TABLE Filme_Publication ADD CONSTRAINT film_publi_unique UNIQUE (filmId, publiId);
+
+CREATE TABLE GenreCinemato(
+    id SERIAL PRIMARY KEY,
+    nom  VARCHAR(32) NOT NULL,
+    parentId INTEGER REFERENCES GenreCinemato(id)
 );
 
-ALTER TABLE Filme_Publication ADD CONSTRAINT film_publi_unique UNIQUE (filmId, publiId);
-
-CREATE TABLE Film (
+CREATE TABLE Film(
     id          SERIAL PRIMARY KEY,
     titre       VARCHAR(64) NOT NULL,
     resume      TEXT,
@@ -65,147 +82,176 @@ CREATE TABLE Film (
 );
 
 
-CREATE TABLE Serie (
+CREATE TABLE Serie(
     id          SERIAL PRIMARY KEY,
-    numero      SMALLINT CHECK (numero > 0),
     saison      SMALLINT,
     titre       VARCHAR(64) NOT NULL,
     nbreEpisodes SMALLINT,
     dureeParEpisode INTEGER, -- en minutes
     datePremiere DATE,
-    genre        VARCHAR(32)
+    genre        INTEGER REFERENCES GenreCinemato(id)
 );
 
-ALTER TABLE Serie ADD CONSTRAINT unique_serie UNIQUE (numero, saison);
+-- ALTER TABLE Serie ADD CONSTRAINT unique_serie UNIQUE (numero, saison);
 
-CREATE TABLE GenreCinemato (
-    idGenre SERIAL PRIMARY KEY,
-    nom   VARCHAR(32) NOT NULL
+
+
+CREATE TABLE SujetPublication(
+    id INTEGER PRIMARY KEY,
+    description  VARCHAR(1024) NOT NULL
 );
 
-CREATE TABLE SousGenreCinemato (
-idSousGenre SERIAL PRIMARY KEY,
-idGenre       INTEGER REFERENCES GenreCinemato(idGenre),
-nom         VARCHAR(32) NOT NULL
+CREATE TABLE MotsCles(
+    motCleId SERIAL PRIMARY KEY,
+    motCle VARCHAR(32) UNIQUE
 );
 
-
-CREATE TABLE SujetPublication (
-idSujet INTEGER PRIMARY KEY REFERENCES Subject(id),
-description  VARCHAR(1024) NOT NULL
-);
-
-CREATE TABLE MotsCles (
-idMotCle SERIAL PRIMARY KEY,
-motCle VARCHAR(32) UNIQUE
-);
-
-CREATE TABLE CategorieDiscussion (
-    idCategorie SERIAL PRIMARY KEY,
+CREATE TABLE CategorieDiscussion(
+    id SERIAL PRIMARY KEY,
     nomCategorie   VARCHAR(32) NOT NULL
 );
 
-CREATE TABLE Discussion (
-    idDiscussion SERIAL PRIMARY KEY,
-    idCreateur INTEGER REFERENCES User(id),
-    titreDiscussion VARCHAR(255) NOT NULL,
+CREATE TABLE Discussion(
+    id SERIAL PRIMARY KEY,
+    auteur INTEGER,
+    titre VARCHAR(255) NOT NULL,
     description TEXT,
-    idCategorie FOREIGN KEY REFERENCES CategorieDiscussion(idCategorie),
+    categorie INTEGER,
+    FOREIGN KEY (categorie) REFERENCES CategorieDiscussion(id) ON DELETE CASCADE,
+    FOREIGN KEY (auteur) REFERENCES Users(id) ON DELETE CASCADE
 );
 
 
-CREATE TABLE Publication (
-    idPublication SERIAL PRIMARY KEY,
-    auteur INTEGER REFERENCES User(id),
-    -- discussion INTEGER REFERENCES Discussion(id),
+CREATE TABLE Publication(
+    id SERIAL PRIMARY KEY,
+    auteur INTEGER REFERENCES Users(id),
+    discussionId INTEGER REFERENCES Discussion(id),
     titre VARCHAR(100) NOT NULL,
     contenu TEXT NOT NULL,
-    idSujet INTEGER REFERENCES Subject(id),
-    -- idMotsCles INTEGER REFERENCES MotsCles(idMotCle),
+    sujetId INTEGER REFERENCES SujetPublication(id),
+    -- motsCles INTEGER REFERENCES MotsCles(motCleId),
     datePublication TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    idPublicationParent  INTEGER REFERENCES Publication(idPublication) --NULL si publication premier niveau
-    FOREIGN KEY (auteur) REFERENCES User(id) ON DELETE CASCADE
+    parentId  INTEGER REFERENCES Publication(id), --NULL si publication premier niveau
+    FOREIGN KEY (auteur) REFERENCES Users(id) ON DELETE CASCADE
 );
 
-CREATE TABLE MotsClesPublication (
-    idPubliMotCle SERIAL PRIMARY KEY,
-    idPublication INTEGER REFERENCES Publication(idPublication),
-    idMotCle INTEGER REFERENCES MotsCles(idMotCle),
+CREATE TABLE MotsClesPublication(
+    publiId INTEGER,
+    motCleId INTEGER,
+    PRIMARY KEY (publiId, motCleId),
+    FOREIGN KEY (motCleId) REFERENCES MotsCles(motCleId) ON DELETE CASCADE,
+    FOREIGN KEY (publiId) REFERENCES Publication(id) ON DELETE CASCADE
+);
+
+CREATE TYPE TypeReaction as ENUM ('Like', 'Dislike', 'Neutre', 'Fun', 'Sad' ,'Angry');
+
+CREATE TABLE Reaction(
+    idPubli INTEGER REFERENCES Publication(id),
+    idUser INTEGER,
+    type TypeReaction,
+    PRIMARY KEY (idPubli, idUser),
+    FOREIGN KEY (idUser) REFERENCES Users(id),
+    FOREIGN KEY (idPubli) REFERENCES Publication(id) ON DELETE CASCADE
 );
 
 CREATE TABLE EventParticulier(
-   idEvent SERIAL PRIMARY KEY,
+   id SERIAL PRIMARY KEY,
+   auteur INTEGER,
+   nomEvent VARCHAR(255) NOT NULL,
    dateEvent DATE NOT NULL,                   
    lieuEvent VARCHAR(255) NOT NULL,              
-   nomEvent VARCHAR(255) NOT NULL,
    nbPlaceDispo INTEGER NOT NULL,     
    nbPlaceReserve INTEGER NOT NULL DEFAULT 0,
-   idOrganisateur INTEGER REFERENCES User(id)
-   idAuteur INTEGER REFERENCES User(id),
-   liens_web TEXT[]
+   organisateur INTEGER ,
+   liens_web TEXT[],
+   FOREIGN KEY (auteur) REFERENCES Users(id) ON DELETE CASCADE,
+   FOREIGN KEY (organisateur) REFERENCES Users(id) ON DELETE CASCADE
 );
 
 CREATE TABLE ParticipationEvent(
-   idUser INTEGER REFERENCES User(id),     -- L'utilisateur s'inscrit à l'événement
-   idEvent INTEGER REFERENCES EventParticulier(id), -- L'événement auquel il s'inscrit
-   PRIMARY KEY(idUser, idEvent)
+   userId INTEGER REFERENCES Users(id),     -- L'utilisateur s'inscrit à l'événement
+   eventId INTEGER REFERENCES EventParticulier(id), -- L'événement auquel il s'inscrit
+   PRIMARY KEY(userId, eventId)
 );
+
+CREATE TABLE InteresseEvent(
+    userId INTEGER REFERENCES Users(id),
+    eventId INTEGER REFERENCES EventParticulier(id),
+    PRIMARY KEY(userId, eventId)
+);
+
 
 
 -- La vue "ParticipationEvent" affiche tous les inscrits à un événement donné.
-CREATE VIEW ParticipationEvents AS 
-SELECT P.* FROM Participant P INNER JOIN EventParticulier E on P.idEvent=E.idEvent;
+-- CREATE VIEW ParticipationEvents AS 
+-- SELECT P.* FROM Participant P INNER JOIN EventParticulier E on P.idEvent=E.idEvent;
 
-ALTER TABLE ParticipationEvents ADD CONSTRAINT check_nbplace CHECK (nbPlaceDispo - nbPlaceReserve >=  0);
-
-SELECT * FROM EventParticulier e INNER JOIN ParticipationEvents i ON e.id = i.idEvent WHERE i.idUser=?;
+-- ALTER TABLE ParticipationEvents ADD CONSTRAINT check_nbplace CHECK (nbPlaceDispo - nbPlaceReserve >=  0);
 
 
-CREATE TABLE Archive (
+CREATE TABLE Archive(
     idArchive SERIAL PRIMARY KEY,
     dateArchivage DATE NOT NULL,
     raison VARCHAR(255) NOT NULL,
-    publication INTEGER REFERENCES Publication(id)
+    idEvent INTEGER REFERENCES Publication(id)  
 );
 
 
-CREATE TABLE Commentaire (
-    idCommentaire SERIAL PRIMARY KEY,
-    idPubli INTEGER REFERENCES Publication(publiId),
-    auteur INTEGER REFERENCES User(id),
-    contenu TEXT NOT NULL,
-    dateCommentaire DATE NOT NULL
-);
+-- CREATE TABLE Commentaire (
+--     idCommentaire SERIAL PRIMARY KEY,
+--     idPubli INTEGER REFERENCES Publication(publiId),
+--     auteur INTEGER REFERENCES User(id),
+--     contenu TEXT NOT NULL,
+--     dateCommentaire DATE NOT NULL
+-- );
 
-CREATE TYPE TypeReaction  as ENUM ('Like', 'Dislike', 'Neutre', 'Fun', 'Sad' ,'Angry');
-
-CREATE TABLE Reaction(
-    idReaction SERIAL PRIMARY KEY,
-    idPubli INTEGER REFERENCES Publication(id),
-    idUser INTEGER REFERENCES User(id),
-    type TypeReaction,
-    FOREIGN KEY (idUser, idPubli)  Publication(auteur, idPublication) ON DELETE CASCADE
-);
 
 
 -- message envoyé par un utilisateur à un autre.
 CREATE TABLE Message (
     id SERIAL PRIMARY KEY,
-    expéditeur INTEGER REFERENCES User(id),
-    destinataire INTEGER REFERENCES User(id),
+    expéditeur INTEGER REFERENCES Users(id),
+    destinataire INTEGER REFERENCES Users(id),
     contenu TEXT NOT NULL
 );
 
-CREATE TABLE Notification (
-    id SERIAL PRIMARY KEY,
-    notificationType NotificationType NOT NULL, -- Type de la notification : newFriendRequest, friendAccepted, friendShipRejected
-    vue BOOLEAN DEFAULT FALSE, -- False signifie que la notification n'a pas été vu par l'utilisateur
-    dateEnvoie DATE NOT NULL,
-    publication VueSurPublication INTEGER, -- Si cette colonne est null c'est qu'il s'agit d'une notification de like ou de dislike sur une public
-    expéditeur INTEGER REFERENCES User(id),
-    destinataire INTEGER REFERENCES User(id),
-    typeNotification ENUM('AjoutPublication','Suivi')
+-- CREATE TABLE Notification (
+--     id SERIAL PRIMARY KEY,
+--     notificationType NotificationType NOT NULL, -- Type de la notification : newFriendRequest, friendAccepted, friendShipRejected
+--     vue BOOLEAN DEFAULT FALSE, -- False signifie que la notification n'a pas été vu par l'utilisateur
+--     dateEnvoie DATE NOT NULL,
+--     publication VueSurPublication INTEGER, -- Si cette colonne est null c'est qu'il s'agit d'une notification de like ou de dislike sur une public
+--     expéditeur INTEGER REFERENCES User(id),
+--     destinataire INTEGER REFERENCES User(id),
+--     typeNotification ENUM('AjoutPublication','Suivi')
+-- );
+
+
+CREATE TABLE HistoriquePublication(
+    idUser  INTEGER REFERENCES Users(id),
+    idPubli INTEGER,
+    action VARCHAR(255), --  ou ajouter ou voir ou repondre à une publication
+    dateAction DATE NOT NULL,
+    PRIMARY KEY (idUser, idPubli, dateAction),
+    FOREIGN KEY (idUser) REFERENCES Users(id) ON UPDATE CASCADE,
+    FOREIGN KEY (idPubli) REFERENCES Publication(id) ON DELETE CASCADE
 );
+
+
+
+
+-- CREATE TABLE HistoriqueReaction(
+--     idUser INTEGER,
+--     idPubli INTEGER,
+--     idReaction INTEGER REFERENCES Reaction(id),
+--     dateAction DATE NOT NULL,
+--     PRIMARY KEY(idUser, idPubli, idReaction, dateAction),
+--         -- On ne peut pas avoir deux fois la même réaction sur la même publication d'un même utilisateur dans le temps
+--     FOREIGN KEY(idUser) REFERENCES Users(id) ON UPDATE CASCADE,
+--     FOREIGN KEY(idPubli) REFERENCES Publication(id) ON UPDATE CASCADE,
+--     FOREIGN KEY(idReaction) REFERENCES Reaction(id)
+-- );
+
 
 ---------------------------------------------------------
 
