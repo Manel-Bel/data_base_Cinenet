@@ -125,20 +125,22 @@ CREATE TABLE Discussion(
 );
 
 
-CREATE TABLE Publication(
+CREATE TABLE Publication( --peut etre table publication sujet publication
     id INTEGER PRIMARY KEY,
     auteur INTEGER REFERENCES Users(id),
     discussionId INTEGER REFERENCES Discussion(id),
     titre VARCHAR(200) NOT NULL,
     contenu TEXT NOT NULL,
     sujetId INTEGER REFERENCES SujetPublication(id),
+    --pourquoi avec cle et non pas table 
+
     -- motsCles INTEGER REFERENCES MotsCles(motCleId),
     --datePublication TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     parentId  INTEGER REFERENCES Publication(id), --NULL si publication premier niveau
     FOREIGN KEY (auteur) REFERENCES Users(id) ON DELETE CASCADE
 );
 
-CREATE TABLE MotsClesPublication(
+CREATE TABLE MotsClesPublication( --dayen
     publiId INTEGER,
     motCleId INTEGER,
     PRIMARY KEY (publiId, motCleId),
@@ -157,7 +159,7 @@ CREATE TABLE Reaction(
     FOREIGN KEY (idPubli) REFERENCES Publication(id) ON DELETE CASCADE
 );
 
-CREATE TABLE EventParticulier(
+CREATE TABLE EventParticulier( -- pourquoi auteur + organisateur 
    id SERIAL PRIMARY KEY,
    auteur INTEGER,
    nomEvent VARCHAR(255) NOT NULL,
@@ -171,7 +173,7 @@ CREATE TABLE EventParticulier(
    FOREIGN KEY (organisateur) REFERENCES Users(id) ON DELETE CASCADE
 );
 
-CREATE TABLE ParticipationEvent(
+CREATE TABLE ParticipationEvent(-- assurer l'exclusion avec  interesser
    userId INTEGER REFERENCES Users(id),     -- L'utilisateur s'inscrit à l'événement
    eventId INTEGER REFERENCES EventParticulier(id), -- L'événement auquel il s'inscrit
    PRIMARY KEY(userId, eventId)
@@ -192,7 +194,7 @@ CREATE TABLE InteresseEvent(
 -- ALTER TABLE ParticipationEvents ADD CONSTRAINT check_nbplace CHECK (nbPlaceDispo - nbPlaceReserve >=  0);
 
 
-CREATE TABLE Archive(
+CREATE TABLE Archive( -- pourquoi relation vers publication et non pas evenement particulié
     idArchive SERIAL PRIMARY KEY,
     dateArchivage DATE NOT NULL,
     raison VARCHAR(255) NOT NULL,
