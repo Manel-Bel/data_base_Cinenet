@@ -146,11 +146,10 @@ def generate_events(n):
             lieuEvent = fake.city()
             nomEvent = fake.sentence(nb_words=5)
             nbPlaceDispo = random.randint(50, 500)
-            nbPlaceReserve = random.randint(0, nbPlaceDispo)  # Assurez-vous que ce nombre est inférieur ou égal à nbPlaceDispo
+            nbPlaceReserve = random.randint(0, nbPlaceDispo) 
             idOrganisateur = random.randint(1, 100)
             writer.writerow([dateEvent, lieuEvent, nomEvent, nbPlaceDispo, nbPlaceReserve, idOrganisateur])
 
-# Ajouter d'autres fonctions similaires pour générer des données pour 'SujetPublication', 'MotsCles', 'CategorieDiscussion', 'Discussion', 'ParticipationEvent', 'Archive', 'Commentaire', 'Reaction', 'Message', 'Notification' etc.
 
 # Table 'SujetPublication'
 def generate_sujet_publication(n):
@@ -458,7 +457,7 @@ generate_filme_publication(100)
 generate_mots_cles_publication(100, 100, 30)  # Supposons que vous ayez 100 publications et 30 mots clés
 
 generate_series(100, 24)  # Générer 100 séries en s'assurant que les genres existent
-generate_event_particulier(50)  # Generate 50 particular events
+generate_event_particulier(100)  # Generate 50 particular events
 generate_interesse_event(200, 100, 50)  # Generate 200 entries with up to 100 users and 50 events
 generate_historique_publication(100, 100, 50)  # Générer 100 entrées historiques avec jusqu'à 100 utilisateurs et 50 publications
 

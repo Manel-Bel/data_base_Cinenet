@@ -81,7 +81,7 @@ CREATE TABLE Film(
     resume      TEXT,
     realisation DATE,
     duree       INTEGER, -- en minutes
-    genre       VARCHAR(32)
+    -- genre        INTEGER REFERENCES GenreCinemato(id)
 );
 
 
@@ -92,17 +92,17 @@ CREATE TABLE Serie(
     nbreEpisodes SMALLINT,
     dureeParEpisode INTEGER, -- en minutes
     datePremiere DATE,
-    genre        INTEGER REFERENCES GenreCinemato(id)
+    -- genre        INTEGER REFERENCES GenreCinemato(id)
 );
 
 -- ALTER TABLE Serie ADD CONSTRAINT unique_serie UNIQUE (numero, saison);
 
 
 
-CREATE TABLE SujetPublication(
-    id INTEGER PRIMARY KEY,
-    description  VARCHAR(1024) NOT NULL
-);
+-- CREATE TABLE SujetPublication(
+--     id INTEGER PRIMARY KEY,
+--     description  VARCHAR(1024) NOT NULL
+-- );
 
 CREATE TABLE MotsCles(
     motCleId SERIAL PRIMARY KEY,
@@ -131,7 +131,7 @@ CREATE TABLE Publication( --peut etre table publication sujet publication
     discussionId INTEGER REFERENCES Discussion(id),
     titre VARCHAR(200) NOT NULL,
     contenu TEXT NOT NULL,
-    sujetId INTEGER REFERENCES SujetPublication(id),
+    --sujetId INTEGER REFERENCES SujetPublication(id),
     --pourquoi avec cle et non pas table 
 
     -- motsCles INTEGER REFERENCES MotsCles(motCleId),
@@ -165,13 +165,18 @@ CREATE TABLE EventParticulier( -- pourquoi auteur + organisateur
    nomEvent VARCHAR(255) NOT NULL,
    dateEvent DATE NOT NULL,                   
    lieuEvent VARCHAR(255) NOT NULL,              
-   nbPlaceDispo INTEGER NOT NULL,     
+   nbPlaceDispo INTEGER, --plus de not null     
    nbPlaceReserve INTEGER NOT NULL DEFAULT 0,
    organisateur INTEGER ,
    liens_web TEXT[],
    FOREIGN KEY (auteur) REFERENCES Users(id) ON DELETE CASCADE,
    FOREIGN KEY (organisateur) REFERENCES Users(id) ON DELETE CASCADE
 );
+
+CREATE VIEW EventParticulierNonNull AS
+SELECT *
+FROM EventParticulier
+WHERE nbPlaceDispo IS NOT NULL;
 
 CREATE TABLE ParticipationEvent(-- assurer l'exclusion avec  interesser
    userId INTEGER REFERENCES Users(id),     -- L'utilisateur s'inscrit à l'événement
@@ -242,6 +247,29 @@ CREATE TABLE HistoriquePublication(
     FOREIGN KEY (idPubli) REFERENCES Publication(id) ON DELETE CASCADE
 );
 
+CREATE TABLE PublicationEventPart( --concerner
+    publiId INTEGER,
+    eventId INTEGER,
+    PRIMARY KEY (publiId, eventId),
+    FOREIGN KEY (eventId) REFERENCES EventParticulier(id) ON DELETE CASCADE,
+    FOREIGN KEY (publiId) REFERENCES Publication(id) ON DELETE CASCADE
+);
+
+CREATE TABLE PublicationFilm( --relation concerner
+    publiId INTEGER,
+    FilmId INTEGER,
+    PRIMARY KEY (publiId, FilmId),
+    FOREIGN KEY (FilmId) REFERENCES Film(id) ON DELETE CASCADE,
+    FOREIGN KEY (publiId) REFERENCES Publication(id) ON DELETE CASCADE
+);
+
+CREATE TABLE PublicationSerie( --concerner
+    publiId INTEGER,
+    SerieId INTEGER,
+    PRIMARY KEY (publiId, SerieId),
+    FOREIGN KEY (SerieId) REFERENCES Serie(id) ON DELETE CASCADE,
+    FOREIGN KEY (publiId) REFERENCES Publication(id) ON DELETE CASCADE
+);
 
 
 
