@@ -66,17 +66,9 @@
 - Genre\[id_genre_parent\] ⊆ Genre\[id_genre\]
 - Unique description
 
-PRBLEME
+**Film** (_id_film_,titre, resume, durée, realisation)
 
-**Film** (_id_film_, id_sujet_publication)
-
-- Film\[id_sujet_publication\] ⊆ SujetPublication\[id_sujet_publication\]
-
-**Serie** (_id_serie_, id_sujet_publication)
-
-- Serie\[id_sujet_publication\] ⊆ SujetPublication\[id_sujet_publication\]
-
-**Categorie** (_id_categorie_, description)
+**Serie** (_id_serie_,titre, resume, durée, saison )
 
 **FilmGenre** (_film_id_, genreId)
 

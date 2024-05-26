@@ -1,12 +1,12 @@
 -- une requête qui porte sur au moins trois tables
--- quels sont tous les amis du realisateur "Cedric" qui suivent le STUDIO MAPPA
+-- quels sont tous les amis du realisateur "paul06" qui suivent le STUDIO MAPPA
 SELECT u.id, u.username
 FROM Users u 
 WHERE u.id IN (
     SELECT a.user2
     FROM Amis a
     WHERE a.user2 = 
-        (SELECT DISTINCT id FROM Users WHERE username = 'Cedric' AND role = 'Realisateur')
+        (SELECT DISTINCT id FROM Users WHERE username = 'paul06' AND role = 'Realisateur')
     )
     AND u.id IN (
         SELECT folower 

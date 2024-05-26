@@ -2,30 +2,30 @@
 \c cinenet;
 
 -- DROP TABLE IF EXISTS Role;
-DROP TABLE IF EXISTS Amis;
-DROP TABLE IF EXISTS Follower;
-DROP TABLE IF EXISTS Archive;
-DROP TABLE IF EXISTS Film CASCADE;
-DROP TABLE IF EXISTS FilmGenre;
-DROP TABLE IF EXISTS Serie;
-DROP TABLE IF EXISTS Reaction;
-DROP TABLE IF EXISTS GenreCinemato CASCADE;
-DROP TABLE IF EXISTS MotsClesPublication;
-DROP TABLE if EXISTS MotsCles;
-DROP TABLE IF EXISTS ParticipationEvent;
-DROP TABLE IF EXISTS InteresseEvent;
-DROP TABLE IF EXISTS HistoriquePublication;
-DROP TABLE IF EXISTS HistoriqueReaction;
-DROP TABLE IF EXISTS EventParticulier;
-DROP TABLE IF EXISTS Publication CASCADE;
-DROP TABLE IF EXISTS SujetPublication;
-DROP TABLE IF EXISTS Discussion;
-DROP TABLE IF EXISTS CategorieDiscussion;
-DROP TABLE IF EXISTS Message;
-DROP TABLE IF EXISTS Users;
-
-DROP TYPE IF EXISTS TypeRole CASCADE;
-DROP TYPE IF EXISTS TypeReaction CASCADE;
+-- DROP TABLE IF EXISTS Amis;
+-- DROP TABLE IF EXISTS Follower;
+-- DROP TABLE IF EXISTS Archive;
+-- DROP TABLE IF EXISTS Film CASCADE;
+-- DROP TABLE IF EXISTS FilmGenre;
+-- DROP TABLE IF EXISTS Serie;
+-- DROP TABLE IF EXISTS Reaction;
+-- DROP TABLE IF EXISTS GenreCinemato CASCADE;
+-- DROP TABLE IF EXISTS MotsClesPublication;
+-- DROP TABLE if EXISTS MotsCles;
+-- DROP TABLE IF EXISTS ParticipationEvent;
+-- DROP TABLE IF EXISTS InteresseEvent;
+-- DROP TABLE IF EXISTS HistoriquePublication;
+-- DROP TABLE IF EXISTS HistoriqueReaction;
+-- DROP TABLE IF EXISTS EventParticulier CASCADE;
+-- DROP TABLE IF EXISTS Publication CASCADE;
+-- DROP TABLE IF EXISTS SujetPublication;
+-- DROP TABLE IF EXISTS Discussion;
+-- DROP TABLE IF EXISTS CategorieDiscussion;
+-- DROP TABLE IF EXISTS Message;
+-- DROP TABLE IF EXISTS Users CASCADE;
+-- 
+-- DROP TYPE IF EXISTS TypeRole CASCADE;
+-- DROP TYPE IF EXISTS TypeReaction CASCADE;
 
 -- CHANGEMENT
 CREATE TYPE TypeRole as ENUM ('lamda', 'Realisateur', 'acteur', 'organisateurSalle', 'Cinema' ,'Club', 'Studio', 'organisateurEvent');
@@ -86,14 +86,14 @@ CREATE TABLE Serie(
     titre       VARCHAR(64) NOT NULL,
     nbreEpisodes SMALLINT,
     dureeParEpisode INTEGER, -- en minutes
-    datePremiere DATE,
+    datePremiere DATE
     -- genre        INTEGER REFERENCES GenreCinemato(id)
 );
 
 CREATE TABLE SerieGenre(
     serieId      INTEGER REFERENCES Serie(id),
     genre       INTEGER REFERENCES GenreCinemato(id),
-    PRIMARY KEY (idSerie, genre)
+    PRIMARY KEY (serieId, genre)
 );
 
 
@@ -142,16 +142,17 @@ CREATE TYPE TypeReaction as ENUM ('Like', 'Dislike', 'Neutre', 'Fun', 'Sad' ,'An
 
 -- CHANGEMENT idPubli --> publiId , idUser --> userId
 CREATE TABLE Reaction(
+    id SERIAL PRIMARY KEY,
     publiId INTEGER REFERENCES Publication(id),
     userId INTEGER,
     type TypeReaction,
-    PRIMARY KEY (publiId, userId),
+    UNIQUE (publiId, userId),
     FOREIGN KEY (userId) REFERENCES Users(id),
-    FOREIGN KEY (publiId) REFERENCES Publication(id) ON DELETE CASCADE?
+    FOREIGN KEY (publiId) REFERENCES Publication(id) ON DELETE CASCADE
 );
 
 
-
+-- CHANGEMENT Constraint
 CREATE TABLE EventParticulier( 
    id SERIAL PRIMARY KEY,
    auteur INTEGER,
@@ -159,18 +160,19 @@ CREATE TABLE EventParticulier(
    dateEvent DATE NOT NULL,                   
    lieuEvent VARCHAR(255) NOT NULL,              
    nbPlaceDispo INTEGER, --plus de not null     
---    nbPlaceReserve INTEGER NOT NULL DEFAULT 0,
+   nbPlaceReserve INTEGER NOT NULL DEFAULT 0,
    organisateur INTEGER ,
    liens_web TEXT[],
    FOREIGN KEY (auteur) REFERENCES Users(id) ON DELETE CASCADE,
-   FOREIGN KEY (organisateur) REFERENCES Users(id) ON DELETE CASCADE
+   FOREIGN KEY (organisateur) REFERENCES Users(id) ON DELETE CASCADE,
+   CONSTRAINT check_places_dispo CHECK (nbPlaceReserve <= nbPlaceDispo)
 );
 
 
 
 CREATE TABLE ParticipationEvent(-- assurer l'exclusion avec  interesser
-   userId INTEGER REFERENCES Users(id),     -- L'utilisateur s'inscrit à l'événement
-   eventId INTEGER REFERENCES EventParticulier(id), -- L'événement auquel il s'inscrit
+   userId INTEGER REFERENCES Users(id),
+   eventId INTEGER REFERENCES EventParticulier(id), 
    PRIMARY KEY(userId, eventId)
 );
 
@@ -180,7 +182,7 @@ CREATE TABLE InteresseEvent(
     PRIMARY KEY(userId, eventId)
 );
 
-
+-- publication qui concerne un event
 CREATE TABLE PublicationEventPart( --concerner
     publiId INTEGER,
     eventId INTEGER,

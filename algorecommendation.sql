@@ -2,23 +2,20 @@
 
 -- 1 Calculer le Nombre de Réactions Positives par Publication
 WITH PositiveReactions AS (
-    SELECT
-        R.idPubli,
-        COUNT(*) AS TotalPositiveReactions
-    FROM
-        Reaction R
-    WHERE
-        R.type IN ('Like', 'Fun', 'Love') -- Réactions considérées comme positives
-        AND NOT EXISTS (
-            SELECT 1
-            FROM HistoriquePublication HP
-            WHERE HP.idPubli = R.idPubli AND HP.idUser = [CurrentUserId] -- Remplacez par l'ID de l'utilisateur actuel
+    SELECT R.publiId,
+        COUNT(*) AS nb_positive_reaction
+    FROM Reaction R
+    WHERE R.type IN ('Like', 'Fun', 'Love')
+    AND NOT EXISTS (
+        SELECT 1
+        FROM HistoriquePublication hp
+        WHERE hp.publiId = R.publiId AND hp.idUser = [CurrentUserId] 
+        -- a remplacer 
         )
-    GROUP BY
-        R.idPubli
-)
+    GROUP BY R.publiId
+);
 
--- 2 publication qui a le nbplacereservé le plus haut ( interessé et participer )
+-- 2 le max de personnes ( interessé et qui participe )
 WITH EventInterestParticipation AS (
     SELECT
         PEP.publiId,
@@ -31,37 +28,34 @@ WITH EventInterestParticipation AS (
         InteresseEvent IE ON E.id = IE.eventId
     LEFT JOIN
         ParticipationEvent PE ON E.id = PE.eventId
-    GROUP BY
-        PEP.publiId
-)
-
+    GROUP BY PEP.publiId
+);
 
 
 -- 3 Troisieme indice :
 
 -- Étape 1 : Filtrer l'historique des publications de l'utilisateur
 WITH UserHistory AS (
-    SELECT
-        HP.idPubli
-    FROM
-        HistoriquePublication HP
+    SELECT hp.publiId
+    FROM HistoriquePublication hp
     WHERE
-        HP.idUser = [CurrentUserId] -- Remplacez par l'ID de l'utilisateur actuel
+        hp.userId = [CurrentUserId] -- Remplacez par l'ID de l'utilisateur actuel
 ),
+
 
 -- Étape 2 : Filtrer les publications avec des bonnes réactions
 UserLikedPublications AS (
     SELECT
-        R.idPubli
+        R.publiId
     FROM
         Reaction R
     WHERE
-        R.idUser = [CurrentUserId] -- ID de l'utilisateur actuel
-        AND R.type IN ('Like', 'Fun')
+        R.userId = [CurrentUserId] -- ID de l'utilisateur actuel
+        AND R.type IN ('Like', 'Fun', 'Love')
         AND EXISTS (
             SELECT 1
             FROM UserHistory UH
-            WHERE UH.idPubli = R.idPubli
+            WHERE UH.publiId = R.publiId
         )
 ),
 
@@ -72,14 +66,14 @@ UserLikedFilmsSeries AS (
     FROM
         PublicationFilm PF
     WHERE
-        PF.publiId IN (SELECT idPubli FROM UserLikedPublications)
+        PF.publiId IN (SELECT publiId FROM UserLikedPublications)
     UNION
     SELECT
         PS.SerieId AS ItemId, 'Serie' AS ItemType
     FROM
         PublicationSerie PS
     WHERE
-        PS.publiId IN (SELECT idPubli FROM UserLikedPublications)
+        PS.publiId IN (SELECT publiId FROM UserLikedPublications)
 ),
 
 -- Étape 4 : Identifier les genres des films et séries
