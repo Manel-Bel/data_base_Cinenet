@@ -13,17 +13,18 @@ def generate_users(n):
 
             writer = csv.writer(file)
             writer.writerow(["username", "password", "email", "role"])
-            existing_users = set()  # Pour garantir l'unicité des noms d'utilisateur    
-            roles = ['lamda', 'Realisateur', 'acteur', 'organisateurSalle', 'Cinema' ,'Club']  # Correspond à l'ENUM TypeRole
-            while len(existing_users) < n:
-                username = fake.user_name()
-                if username in existing_users:
+            existing_emails = set()  # Pour garantir l'unicité des noms d'utilisateur    
+            roles = ['lamda', 'Realisateur', 'acteur', 'organisateurSalle', 'Cinema' ,'Club', 'Studio', 'organisateurEvent']  # Correspond à l'ENUM TypeRole
+            while len(existing_emails) < n:
+                email = fake.user_email()
+                if email in existing_emails:
                     continue
+                username = fake.user_name()
                 password = fake.password(length=12)
                 email = fake.email()
                 role = random.choice(roles)
                 writer.writerow([username, password, email, role])
-                existing_users.add(username)
+                existing_emails.add(email)
     except Exception as e:
         print(f"An error occurred while writing Utilisateurs.csv: {e}")
 
@@ -65,12 +66,9 @@ def generate_publications(n):
 
 
 
-
-
-
 # Table 'Role'
 def generate_roles():
-    roles = ['Admin', 'Moderateur', 'Membre', 'Visiteur', 'VIP']
+    roles = ['lamda', 'Realisateur', 'acteur', 'organisateurSalle', 'Cinema' ,'Club', 'Studio', 'organisateurEvent']
     with open(os.path.join(base_path, 'roles.csv'), mode='w', newline='') as file:
 
         writer = csv.writer(file)
@@ -78,17 +76,6 @@ def generate_roles():
         for role in roles:
             writer.writerow([role])
 
-# Table 'Amis'
-def generate_friends(n):
-    with open(os.path.join(base_path, 'amis.csv'), mode='w', newline='') as file:
-        writer = csv.writer(file)
-        writer.writerow(["user1", "user2"])
-        for _ in range(n):
-            user1 = random.randint(1, 100)
-            user2 = random.randint(1, 100)
-            while user1 == user2:
-                user2 = random.randint(1, 100)
-            writer.writerow([user1, user2])
 
 # Table 'Follow'
 def generate_follows(n):
@@ -133,8 +120,6 @@ def generate_series(n, max_genre_id):
             genre = random.randint(1, max_genre_id)
             writer.writerow([id, saison, titre, nbreEpisodes, dureeParEpisode, datePremiere, genre])
             used_ids.add(id)  # Ajouter l'ID à l'ensemble des ID utilisés
-
-
 
 
 def generate_events(n):
@@ -432,23 +417,22 @@ def generate_historique_publication(n, max_user_id, max_publi_id):
 # activation de ses fonctions
 generate_genre_cinemato(24)  # Générer des genres cinématographiques, en assurant qu'il y en a assez pour les références
 
-generate_users(100)  # Générer 100 utilisateurs
-generate_films(50)   # Générer 50 films
-generate_publications(100)  # Générer 100 publications
-
-generate_sujet_publication(10)  # Générer 10 entrées de sujet de publication
-generate_mots_cles(30)          # Générer 30 mots clés uniques
+generate_users(100) 
+generate_films(50)  
+generate_publications(100)  
+generate_sujet_publication(10) 
+generate_mots_cles(30)         
 generate_categorie_discussion(10)  # Générer 10 catégories de discussion uniques
-generate_discussions(50)        # Générer 50 discussions
+generate_discussions(50)    
 
 generate_participation_event(50, 20)  # Générer 50 participations à des événements, avec un maximum de 20 événements différents
-generate_archive(30)              # Générer 30 entrées d'archive
-generate_commentaire(100)         # Générer 100 commentaires
-# Exemple de correction de l'appel de la fonction
+generate_archive(30)        
+generate_commentaire(100)
+
 generate_reactions(200, 100)  # Générer 200 réactions pour 100 publications
 
-generate_message(150)             # Générer 150 messages
-generate_notification(80)         # Générer 80 notifications
+# generate_message(150)             
+# generate_notification(80) 
 
 generate_roles()
 generate_amis(100)

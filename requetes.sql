@@ -1,5 +1,48 @@
--- auto jointure pour recuperrer les sous genre du genre action dont l'id est 1 :)))
+-- une requête qui porte sur au moins trois tables
+-- quels sont tous les amis du realisateur "Cedric" qui suivent le STUDIO MAPPA
+SELECT u.id, u.username
+FROM Users u 
+WHERE u.id IN (
+    SELECT a.user2
+    FROM Amis a
+    WHERE a.user2 = 
+        (SELECT DISTINCT id FROM Users WHERE username = 'Cedric' AND role = 'Realisateur')
+    )
+    AND u.id IN (
+        SELECT folower 
+        FROM Follower
+        WHERE id = 
+            ( SELECT id 
+            FROM Users
+            WHERE username = 'Mappa' AND role = 'Studio')
+            )
+;
+
+
+-- auto jointure pour recuperer les sous genre du genre action dont l'id est 1 :)))
 select G2.id, G2.nom from GenreCinemato G1 inner join GenreCinemato G2 on G1.id = G2.parentId where G1.id = 1 ;
+
+
+-- — une sous-requête corrélée
+-- la liste des utilisateurs ayant participé à tous les evemements organisé par 'japan expo'
+SELECT u.id, u.username
+FROM Users u
+WHERE NOT EXISTS
+    ( SELECT * 
+    FROM EventParticulier e 
+    WHERE e.organisateur = 
+        ( SELECT id 
+        FROM Users
+        WHERE username = 'Japan Expo')
+        AND NOT EXISTS 
+        ( SELECT *
+        FROM ParticipationEvent pe 
+        WHERE pe.eventId = e.id 
+        AND pe.userId = u.id
+        )
+    )
+;
+
 
 -- sous requete dans le from 
 SELECT u.username, p.titre
@@ -9,6 +52,23 @@ FROM (
     WHERE username LIKE 'j%'
 ) AS u
 INNER JOIN Publication p ON p.auteur = u.id;
+
+
+-- une sous-requête dans le WHERE ; 
+-- quels sont les films de genre 'Horror' et leurs sous genre ?
+-- à CHANGER 
+SELECT f.id, f.titre
+FROM Film f JOIN FilmGenre fg  ON f.id = fg.filmId
+JOIN GenreCinemato g ON fg.genreId = g.id
+WHERE g.name = 'Horror' OR 
+    g.parent = (
+        SELECT id FROM GenreCinemato WHERE name = 'Horror'
+        )
+GROUP BY f.id
+ORDER BY f.titre ;
+
+
+
 
 --Compter le nombre de publications par utilisateur, mais seulement pour ceux ayant plus de 5 publications
 SELECT auteur, COUNT(*) AS nombre_publications
@@ -40,6 +100,22 @@ GROUP BY id
 HAVING (nbPlaceDispo - nbPlaceReserve) < (0.1 * nbPlaceDispo);
 
 
+--  une requête impliquant le calcul de deux agrégats
+-- quel est la moyenne du nombre maximun de participant à un evenement pour chaque année
+SELECT year, ROUND(AVG(max_participants), 2) as moyenne_max_participants
+FROM(
+    SELECT EXTRACT(MONTH FROM e.dateEvent) as mois, EXTRACT(YEAR FROM e.dateEvent) as year, max(pa.userId) as max_participants
+    FROM EventParticulier e JOIN ParticipationEvent pa
+    ON e.id = pa.eventId
+    GROUP BY mois, year
+    )
+AS max_participants_par_mois_year
+GROUP BY year
+ORDER BY year DESC
+;
+
+
+
 --Utilisation d'un RIGHT JOIN pour trouver tous les films et leur genre, même ceux sans genre spécifié
 SELECT f.titre, g.nom
 FROM GenreCinemato g
@@ -64,13 +140,50 @@ GROUP BY e.nomEvent
 ORDER BY nombre_participants;
 
 
--- Utilisation d'un FULL JOIN pour afficher tous les sujets de publication et toutes les discussions, indépendamment de s'ils sont liés ou non
+-- — deux requêtes équivalentes exprimant une condition de totalité, l’une avec des sous requêtes corrélées et l’autre avec de l’agrégation
 
--- SELECT sp.description AS sujet_description, d.titre AS discussion_titre
--- FROM SujetPublication sp
--- FULL JOIN Publication p ON sp.id = p.sujetId
--- FULL JOIN Discussion d ON p.discussionId = d.id
--- ORDER BY sp.description, d.titre;
+-- Quels sont les utilisateurs ayant participé UNIQUEMENT à tous les événements organisés par un studio HBO et ne pas avoir participé au évènement de studio adverse NETFLIX ?
+SELECT u.id, u.username
+FROM Users u
+WHERE NOT EXISTS (
+    SELECT *
+    FROM ParticipationEvent pe_hbo
+    JOIN EventParticulier e_hbo ON pe_hbo.eventId = e_hbo.id
+    WHERE pe_hbo.userId = u.id
+    AND e_hbo.organisateur = 'HBO'
+)
+AND NOT EXISTS (
+    SELECT *
+    FROM EventParticulier e_netflix
+    WHERE e_netflix.organisateur = 'Netflix'
+    AND NOT EXISTS (
+        SELECT *
+        FROM ParticipationEvent pe_netflix
+        WHERE pe_netflix.id = u.id
+        AND pe_netflix.eventId = e_netflix.id
+    )
+);
+
+
+SELECT u.id, u.username
+FROM Users u
+JOIN ParticipationEvent pe_netflix ON u.id = pe_netflix.id
+JOIN EventParticulier e_netflix ON pe_netflix.eventId = e_netflix.eventId
+WHERE e_netflix.organisateur = 'Netflix'
+GROUP BY u.id, u.username
+HAVING COUNT(pe_netflix.eventId) = (
+    SELECT COUNT(e_netflix_inner.eventId)
+    FROM EventParticulier e_netflix_inner
+    WHERE e_netflix_inner.nom = 'Netflix'
+)
+AND u.id NOT IN (
+    SELECT pe_hbo.id
+    FROM ParticipationEvent pe_hbo
+    JOIN EventParticulier e_hbo ON pe_hbo.id_evenement = e_hbo.id_evenement
+    WHERE s_hbo.organisateur = 'HBO'
+);
+
+
 
 
 --requete equivantes mais qui retourne de resultat deffirents a cause de valeur null :
@@ -133,6 +246,74 @@ WHERE COALESCE(nbPlaceDispo, 0) = (
 ORDER BY nomEvent DESC;
 
 
+
+
+-- Une requête récursive;
+-- niveau de chaque publication sur le forum
+WITH RECURSIVE publicationNiveau AS 
+    (SELECT id as id_publication , auteur, titre, parentId,
+        0 AS niveau 
+    FROM  Publication
+    WHERE parentId IS NULL
+
+    UNION ALL
+    -- Recursive case: 
+    SELECT  p.id AS id_publication, p.auteur, p.titre, p.parentId,
+        pn.niveau + 1 AS niveau
+    FROM Publication p
+    JOIN publicationNiveau pn 
+    ON p.parentId = pn.id_publication
+)
+
+SELECT id_publication, auteur, titre, parentId, niveau
+FROM  publicationNiveau
+ORDER BY  niveau, id_publication;
+
+-- calcule de la profondeur d'un publication  (exemple publication 1)
+WITH RECURSIVE publicationDepth AS(   
+    SELECT id as id_publication,parentId, 0 AS profondeur
+    FROM  Publication
+    WHERE id = 1
+    UNION ALL
+
+    SELECT p.id AS id_publication, p.parentId, d.profondeur + 1 as profondeur
+    FROM Publication p
+    JOIN publicationDepth d ON p.parentId = d.id_publication 
+)
+, MaxProfondeur AS (
+    SELECT id_publication, MAX(profondeur) AS hauteur
+    FROM publicationDepth
+    GROUP BY id_publication
+)
+SELECT p.id AS id_publication, p.auteur, p.titre, p.parentId, COALESCE(mp.hauteur, 0)
+FROM publication p 
+JOIN MaxProfondeur mp ON p.id = mp.id_publication
+WHERE p.id= 1
+;
+
+-- chaine d'amitié de user 1 à revoir 
+WITH RECURSIVE chaineAmitie AS(
+    SELECT user1 as id_user, user2 as ami, 1 AS niveau
+    FROM Amis
+    WHERE user1 = 1
+    UNION
+    SELECT a.user1 as id_user, a.user2 as ami, ca.niveau + 1 as niveau
+    FROM Amis a 
+    JOIN chaineAmitie as ca 
+    ON a.user1 = ca.ami 
+    )
+SELECT DISTINCT
+ca.ami,
+u.username,
+ca.niveau
+FROM  ChaineAmitie ca
+JOIN  Users u ON ca.ami = u.id
+ORDER BY ca.niveau, ca.ami;
+
+
+
+
+
 --Requete avec fenetrage 
 --La requête vise à identifier les 10 événements les plus populaires, organisés par des utilisateurs ayant le rôle 'acteur'
 --, pour chaque mois de l'année 2025. La popularité est déterminée par le nombre de participants à chaque événement.
@@ -146,14 +327,13 @@ WITH MonthlyEventOrganizers AS (
         EXTRACT(YEAR FROM E.dateEvent) AS EventYear,
         COUNT(P.userId) AS TotalParticipants,
         RANK() OVER (PARTITION BY EXTRACT(MONTH FROM E.dateEvent) ORDER BY COUNT(P.userId) DESC) AS Rank
-    FROM
-        EventParticulier E
-    INNER JOIN
-        Users U ON E.organisateur = U.id
-    INNER JOIN
-        ParticipationEvent P ON E.id = P.eventId
-    WHERE
-        U.role = 'acteur' AND EXTRACT(YEAR FROM E.dateEvent) = 2025
+
+    FROM EventParticulier E
+
+    INNER JOIN Users U ON E.organisateur = U.id
+
+    INNER JOIN ParticipationEvent P ON E.id = P.eventId
+    WHERE U.role = 'acteur' AND EXTRACT(YEAR FROM E.dateEvent) = 2025
     GROUP BY
         E.id, E.organisateur, U.username, EXTRACT(MONTH FROM E.dateEvent), EXTRACT(YEAR FROM E.dateEvent)
 )
@@ -165,177 +345,8 @@ SELECT
     EventYear,
     TotalParticipants,
     Rank
-FROM
-    MonthlyEventOrganizers
-WHERE
-    Rank <= 10
-ORDER BY
-    EventMonth, Rank;
 
--- Algorithme de recommendation
-
--- 1 Calculer le Nombre de Réactions Positives par Publication
-WITH PositiveReactions AS (
-    SELECT
-        R.idPubli,
-        COUNT(*) AS TotalPositiveReactions
-    FROM
-        Reaction R
-    WHERE
-        R.type IN ('Like', 'Fun', 'Love') -- Réactions considérées comme positives
-        AND NOT EXISTS (
-            SELECT 1
-            FROM HistoriquePublication HP
-            WHERE HP.idPubli = R.idPubli AND HP.idUser = [CurrentUserId] -- Remplacez par l'ID de l'utilisateur actuel
-        )
-    GROUP BY
-        R.idPubli
-)
-
--- 2 publication qui a le nbplacereservé le plus haut ( interessé et participer )
-WITH EventInterestParticipation AS (
-    SELECT
-        PEP.publiId,
-        COALESCE(COUNT(DISTINCT IE.userId), 0) + COALESCE(COUNT(DISTINCT PE.userId), 0) AS TotalInterestParticipation
-    FROM
-        PublicationEventPart PEP
-    LEFT JOIN
-        EventParticulier E ON PEP.eventId = E.id
-    LEFT JOIN
-        InteresseEvent IE ON E.id = IE.eventId
-    LEFT JOIN
-        ParticipationEvent PE ON E.id = PE.eventId
-    GROUP BY
-        PEP.publiId
-)
-
-
-
--- 3 Troisieme indice :
-
--- Étape 1 : Filtrer l'historique des publications de l'utilisateur
-WITH UserHistory AS (
-    SELECT
-        HP.idPubli
-    FROM
-        HistoriquePublication HP
-    WHERE
-        HP.idUser = [CurrentUserId] -- Remplacez par l'ID de l'utilisateur actuel
-),
-
--- Étape 2 : Filtrer les publications avec des bonnes réactions
-UserLikedPublications AS (
-    SELECT
-        R.idPubli
-    FROM
-        Reaction R
-    WHERE
-        R.idUser = [CurrentUserId] -- ID de l'utilisateur actuel
-        AND R.type IN ('Like', 'Fun')
-        AND EXISTS (
-            SELECT 1
-            FROM UserHistory UH
-            WHERE UH.idPubli = R.idPubli
-        )
-),
-
--- Étape 3 : Trouver les films et séries associés à ces publications
-UserLikedFilmsSeries AS (
-    SELECT
-        PF.FilmId AS ItemId, 'Film' AS ItemType
-    FROM
-        PublicationFilm PF
-    WHERE
-        PF.publiId IN (SELECT idPubli FROM UserLikedPublications)
-    UNION
-    SELECT
-        PS.SerieId AS ItemId, 'Serie' AS ItemType
-    FROM
-        PublicationSerie PS
-    WHERE
-        PS.publiId IN (SELECT idPubli FROM UserLikedPublications)
-),
-
--- Étape 4 : Identifier les genres des films et séries
-UserLikedGenres AS (
-    SELECT
-        G.nom AS GenreName
-    FROM
-        UserLikedFilmsSeries ULFS
-    JOIN
-        Film F ON ULFS.ItemId = F.id AND ULFS.ItemType = 'Film'
-    JOIN
-        GenreCinemato G ON F.genre = G.id
-    UNION
-    SELECT
-        G.nom AS GenreName
-    FROM
-        UserLikedFilmsSeries ULFS
-    JOIN
-        Serie S ON ULFS.ItemId = S.id AND ULFS.ItemType = 'Serie'
-    JOIN
-        GenreCinemato G ON S.genre = G.id
-),
-
--- Étape 5 : Proposer des publications de films et séries du même genre
-RecommendedPublications AS (
-    SELECT
-        P.id AS PublicationID,
-        P.titre AS PublicationTitle,
-        G.nom AS GenreName
-    FROM
-        Publication P
-    LEFT JOIN
-        PublicationFilm PF ON P.id = PF.publiId
-    LEFT JOIN
-        Film F ON PF.FilmId = F.id
-    LEFT JOIN
-        PublicationSerie PS ON P.id = PS.publiId
-    LEFT JOIN
-        Serie S ON PS.SerieId = S.id
-    LEFT JOIN
-        GenreCinemato G ON (F.genre = G.id OR S.genre = G.id)
-    WHERE
-        G.nom IN (SELECT GenreName FROM UserLikedGenres)
-        AND NOT EXISTS (
-            SELECT 1
-            FROM HistoriquePublication HP
-            WHERE HP.idPubli = P.id AND HP.idUser = [CurrentUserId]
-        )
-)
---juste un plus pour ce troisieme indice 
-SELECT
-    PublicationID,
-    PublicationTitle,
-    GenreName
-FROM
-    RecommendedPublications
-ORDER BY
-    GenreName, PublicationTitle
-LIMIT 10;
-
-
--- Combinaison des indices
-SELECT
-    P.id AS PublicationID,
-    P.titre AS PublicationTitle,
-    COALESCE(PR.TotalPositiveReactions, 0) AS PositiveReactions,
-    COALESCE(EIP.TotalInterestParticipation, 0) AS InterestParticipation,
-    COALESCE(
-        (SELECT COUNT(*) FROM RecommendedPublications RP WHERE RP.PublicationID = P.id),
-        0
-    ) AS GenreRecommendation,
-    (COALESCE(PR.TotalPositiveReactions, 0) * 0.4 + COALESCE(EIP.TotalInterestParticipation, 0) * 0.3 + COALESCE(
-        (SELECT COUNT(*) FROM RecommendedPublications RP WHERE RP.PublicationID = P.id),
-        0
-    ) * 0.3) AS RecommendationScore
-FROM
-    Publication P
-LEFT JOIN
-    PositiveReactions PR ON P.id = PR.idPubli
-LEFT JOIN
-    EventInterestParticipation EIP ON P.id = EIP.publiId
-ORDER BY
-    RecommendationScore DESC
-LIMIT 10;
+FROM MonthlyEventOrganizers
+WHERE Rank <= 10
+ORDER BY EventMonth, Rank;
 

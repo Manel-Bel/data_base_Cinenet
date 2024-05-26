@@ -9,35 +9,50 @@ CREATE VIEW UserFellowersView AS
     JOIN Users uf ON uf.id = f.folower
 ;
 
+CREATE VIEW EventParticulierNonNull AS
+    SELECT *
+    FROM EventParticulier
+    WHERE nbPlaceDispo IS NOT NULL
+;
 
 INSERT INTO GenreCinemato (name, parent) VALUES
 ('Action', NULL),
 ('Comedy', NULL),
 ('Drama', NULL),
-('Thriller', 'Action'),
-('Romantic Comedy', 'Comedy');
+('Thriller', 1),
+('Romantic Comedy', 2),
+('Horror', NULL), --6
+('Slasher', 6), -- Subgenre of Horror
+('Supernatural', 6), -- Subgenre of Horror
+('Psychological', 6); -- Subgenre of Horror
 
 INSERT INTO Film (titre, resume, realisation, duree) VALUES
 ('Inception', 'A mind-bending thriller', '2010-07-16', 148),
 ('The Dark Knight', 'Batman faces the Joker', '2008-07-18', 152),
 ('Forrest Gump', 'The story of Forrest Gump', '1994-07-06', 142),
 ('The Hangover', 'A bachelor party gone wrong', '2009-06-05', 100),
-('Love Actually', 'Multiple romantic stories', '2003-11-14', 135);
+('Love Actually', 'Multiple romantic stories', '2003-11-14', 135),
+('The Exorcist', 'When a teenage girl is possessed by a mysterious entity, her mother seeks the help of two priests to save her.', '1973-12-26', 122),
+('Halloween', 'Fifteen years after murdering his sister on Halloween night 1963, Michael Myers escapes from a mental hospital and returns to the small town of Haddonfield, Illinois to kill again.', '1978-10-25', 91),
+('The Shining', 'A family heads to an isolated hotel for the winter where a sinister presence influences the father into violence, while his psychic son sees horrific forebodings from both past and future.', '1980-06-13', 146),
+('Psycho', 'A secretary embezzles money and runs away, only to come across a secluded motel operated by a strange young man.', '1960-09-08', 109),
+('Scream', 'A year after the murder of her mother, a teenage girl is terrorized by a new killer, who targets the girl and her friends by using horror films as part of a deadly game.', '1996-12-20', 111);
 
-INSERT INTO FilmGenre (idFilm, genre) VALUES
-(1, 'Thriller'),
-(2, 'Action'),
-(3, 'Drama'),
-(4, 'Comedy'),
-(5, 'Romantic Comedy');
+INSERT INTO FilmGenre (filmId, genreId) VALUES
+(1, 4),
+(2, 1),
+(3, 3),
+(4, 2),
+(5, 5),
+(6, 8), -- The Exorcist (Supernatural)
+(7, 7), -- Halloween (Slasher)
+(8, 8), -- The Shining (Supernatural)
+(9, 9), -- Psycho (Psychological)
+(10, 7), -- Scream (Slasher)
+(10, 9); -- Scream (Psychological)
 
-INSERT INTO Publication (id, auteur, discussionId, titre, contenu, datePublication, parentId) VALUES
-(1, 1, 1, 'Introduction to Databases', 'This is an introduction to databases.', '2023-05-01 10:00:00', NULL),
-(2, 2, 1, 'Re: Introduction to Databases', 'Thank you for the introduction.', '2023-05-01 11:00:00', 1),
-(3, 1, 2, 'Advanced SQL Queries', 'Let s discuss advanced SQL queries.', '2023-05-02 09:00:00', NULL),
-(4, 3, 2, 'Re: Advanced SQL Queries', 'Here are some tips for advanced SQL queries.', '2023-05-02 10:30:00', 3);
 
-
+SELECT id, titre,realisation FROM Film limit 10;
 SELECT id, auteur, titre, categorie from Discussion limit 5;
 
 SELECT id, auteur, titre, parentId FROM Publication LIMIT 5;
@@ -49,6 +64,15 @@ SELECT id, auteur, titre, parentId FROM Publication LIMIT 5;
 -- publiId INTEGER REFERENCES Publication(publiId)
 -- );
 
+
+
+-- Utilisation d'un FULL JOIN pour afficher tous les sujets de publication et toutes les discussions, indépendamment de s'ils sont liés ou non
+
+-- SELECT sp.description AS sujet_description, d.titre AS discussion_titre
+-- FROM SujetPublication sp
+-- FULL JOIN Publication p ON sp.id = p.sujetId
+-- FULL JOIN Discussion d ON p.discussionId = d.id
+-- ORDER BY sp.description, d.titre;
 
 INSERT INTO Publication (id, auteur, discussionId, titre, contenu, datePublication, parentId) VALUES
 (1, 1, 1, 'Introduction to Databases', 'This is an introduction to databases.', '2023-05-01 10:00:00', NULL),

@@ -5,7 +5,8 @@
 DROP TABLE IF EXISTS Amis;
 DROP TABLE IF EXISTS Follower;
 DROP TABLE IF EXISTS Archive;
-DROP TABLE IF EXISTS Film;
+DROP TABLE IF EXISTS Film CASCADE;
+DROP TABLE IF EXISTS FilmGenre;
 DROP TABLE IF EXISTS Serie;
 DROP TABLE IF EXISTS Reaction;
 DROP TABLE IF EXISTS GenreCinemato CASCADE;
@@ -54,12 +55,11 @@ CREATE TABLE Follower(
     CONSTRAINT follow_self CHECK (id != folower)
 );
 
--- CHANGEMENT : id n'est plus un integer c'est le nom
--- et parent n'est plus integer
+-- CHANGEMENT : 
 -- nom --> name
 CREATE TABLE GenreCinemato(
-    id SERIAL INTEGER PRIMARY KEY,
-    name    VARCHAR(32) PRIMARY KEY,
+    id SERIAL PRIMARY KEY,
+    name    VARCHAR(32) UNIQUE,
     parent INTEGER REFERENCES GenreCinemato(id)
 );
 
@@ -69,14 +69,14 @@ CREATE TABLE Film(
     titre       VARCHAR(64) NOT NULL,
     resume      TEXT,
     realisation DATE,
-    duree       INTEGER, -- en minutes
+    duree       INTEGER -- en minutes
 );
 
 -- CHANGEMENt NV TABLE
 CREATE TABLE FilmGenre(
-    idFilm      INTEGER REFERENCES Film(id),
-    genre       INTEGER REFERENCES GenreCinemato(id),
-    PRIMARY KEY (idFilm, genre)
+    filmId      INTEGER REFERENCES Film(id),
+    genreId       INTEGER REFERENCES GenreCinemato(id),
+    PRIMARY KEY (filmId, genreId)
 );
 
 
@@ -91,38 +91,29 @@ CREATE TABLE Serie(
 );
 
 CREATE TABLE SerieGenre(
-    idSerie      INTEGER REFERENCES Serie(id),
+    serieId      INTEGER REFERENCES Serie(id),
     genre       INTEGER REFERENCES GenreCinemato(id),
     PRIMARY KEY (idSerie, genre)
 );
-
-CREATE TABLE SerieGenre(
-    idSerie      INTEGER REFERENCES Serie(id),
-    genre       INTEGER REFERENCES GenreCinemato(id),
-    PRIMARY KEY (idSerie, genre)
-);
-
--- ALTER TABLE Serie ADD CONSTRAINT unique_serie UNIQUE (numero, saison);
-
 
 
 CREATE TABLE MotsCles(
     motCleId SERIAL PRIMARY KEY,
     motCle VARCHAR(32) UNIQUE
 );
-
+-- CHANGEMET nomCategorie -> categorie and Uniue categorie
 CREATE TABLE CategorieDiscussion(
     id SERIAL PRIMARY KEY,
-    nomCategorie   VARCHAR(32) NOT NULL
+    categorie   VARCHAR(32) NOT NULL UNIQUE
 );
-
+-- Changement categorie -> categorieId
 CREATE TABLE Discussion(
     id SERIAL PRIMARY KEY,
     auteur INTEGER,
     titre VARCHAR(255) NOT NULL,
     description TEXT,
-    categorie INTEGER,
-    FOREIGN KEY (categorie) REFERENCES CategorieDiscussion(id) ON DELETE CASCADE,
+    categorieId INTEGER,
+    FOREIGN KEY (categorieId) REFERENCES CategorieDiscussion(id) ON DELETE CASCADE,
     FOREIGN KEY (auteur) REFERENCES Users(id) ON DELETE CASCADE
 );
 
@@ -133,14 +124,13 @@ CREATE TABLE Publication(
     discussionId INTEGER REFERENCES Discussion(id),
     titre VARCHAR(200) NOT NULL,
     contenu TEXT NOT NULL,
-    -- sujetId INTEGER REFERENCES SujetPublication(id),
     datePublication TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     parentId  INTEGER REFERENCES Publication(id), --NULL si publication premier niveau
     FOREIGN KEY (auteur) REFERENCES Users(id) ON DELETE CASCADE
 );
 
 
-CREATE TABLE MotsClesPublication( --dayen
+CREATE TABLE MotsClesPublication( 
     publiId INTEGER,
     motCleId INTEGER,
     PRIMARY KEY (publiId, motCleId),
@@ -148,19 +138,20 @@ CREATE TABLE MotsClesPublication( --dayen
     FOREIGN KEY (publiId) REFERENCES Publication(id) ON DELETE CASCADE
 );
 
-CREATE TYPE TypeReaction as ENUM ('Like', 'Dislike', 'Neutre', 'Fun', 'Sad' ,'Angry');
+CREATE TYPE TypeReaction as ENUM ('Like', 'Dislike', 'Neutre', 'Fun', 'Sad' ,'Angry', 'Love');
 
+-- CHANGEMENT idPubli --> publiId , idUser --> userId
 CREATE TABLE Reaction(
-    idPubli INTEGER REFERENCES Publication(id),
-    idUser INTEGER,
+    publiId INTEGER REFERENCES Publication(id),
+    userId INTEGER,
     type TypeReaction,
-    PRIMARY KEY (idPubli, idUser),
-    FOREIGN KEY (idUser) REFERENCES Users(id),
-    FOREIGN KEY (idPubli) REFERENCES Publication(id) ON DELETE CASCADE?
+    PRIMARY KEY (publiId, userId),
+    FOREIGN KEY (userId) REFERENCES Users(id),
+    FOREIGN KEY (publiId) REFERENCES Publication(id) ON DELETE CASCADE?
 );
 
 
--- ORGANISATEUR N'EST PAS UNE CLE ETARNGERE 
+
 CREATE TABLE EventParticulier( 
    id SERIAL PRIMARY KEY,
    auteur INTEGER,
@@ -168,17 +159,14 @@ CREATE TABLE EventParticulier(
    dateEvent DATE NOT NULL,                   
    lieuEvent VARCHAR(255) NOT NULL,              
    nbPlaceDispo INTEGER, --plus de not null     
-   nbPlaceReserve INTEGER NOT NULL DEFAULT 0,
+--    nbPlaceReserve INTEGER NOT NULL DEFAULT 0,
    organisateur INTEGER ,
    liens_web TEXT[],
    FOREIGN KEY (auteur) REFERENCES Users(id) ON DELETE CASCADE,
    FOREIGN KEY (organisateur) REFERENCES Users(id) ON DELETE CASCADE
 );
 
-CREATE VIEW EventParticulierNonNull AS
-SELECT *
-FROM EventParticulier
-WHERE nbPlaceDispo IS NOT NULL;
+
 
 CREATE TABLE ParticipationEvent(-- assurer l'exclusion avec  interesser
    userId INTEGER REFERENCES Users(id),     -- L'utilisateur s'inscrit à l'événement
@@ -192,47 +180,6 @@ CREATE TABLE InteresseEvent(
     PRIMARY KEY(userId, eventId)
 );
 
-
-
--- La vue "ParticipationEvent" affiche tous les inscrits à un événement donné.
--- CREATE VIEW ParticipationEvents AS 
--- SELECT P.* FROM Participant P INNER JOIN EventParticulier E on P.idEvent=E.idEvent;
-
--- ALTER TABLE ParticipationEvents ADD CONSTRAINT check_nbplace CHECK (nbPlaceDispo - nbPlaceReserve >=  0);
-
-
-
--- changement fait pour id event 
-CREATE TABLE Archive( -- pourquoi relation vers publication et non pas evenement particulié
-    idArchive SERIAL PRIMARY KEY,
-    dateArchivage DATE NOT NULL,
-    raison VARCHAR(255) NOT NULL,
-    idEvent INTEGER REFERENCES EventParticulier(id)  
-);
-
-
-
-
--- message envoyé par un utilisateur à un autre.
-CREATE TABLE Message (
-    id SERIAL PRIMARY KEY,
-    expéditeur INTEGER REFERENCES Users(id),
-    destinataire INTEGER REFERENCES Users(id),
-    contenu TEXT NOT NULL
-);
-
-
-
-CREATE TABLE HistoriquePublication(
-    idUser  INTEGER REFERENCES Users(id),
-    idPubli INTEGER,
-    action VARCHAR(255), --  ou ajouter ou voir ou repondre à une publication
-    dateAction DATE NOT NULL,
-    idReaction INTEGER REFERENCES Reaction(id),
-    PRIMARY KEY (idUser, idPubli, dateAction),
-    FOREIGN KEY (idUser) REFERENCES Users(id) ON UPDATE CASCADE,
-    FOREIGN KEY (idPubli) REFERENCES Publication(id) ON DELETE CASCADE
-);
 
 CREATE TABLE PublicationEventPart( --concerner
     publiId INTEGER,
@@ -259,6 +206,36 @@ CREATE TABLE PublicationSerie( --concerner
 );
 
 
+
+-- CHANGEMENT  idevent -->eventId, 
+CREATE TABLE Archive( 
+    idArchive SERIAL PRIMARY KEY,
+    dateArchivage DATE NOT NULL,
+    raison VARCHAR(255) NOT NULL,
+    eventId INTEGER REFERENCES EventParticulier(id)  
+);
+
+
+-- message envoyé par un utilisateur à un autre.
+CREATE TABLE Message (
+    id SERIAL PRIMARY KEY,
+    expéditeur INTEGER REFERENCES Users(id),
+    destinataire INTEGER REFERENCES Users(id),
+    contenu TEXT NOT NULL
+);
+
+
+-- CHNAGEMENT IdPubli--> publiId and userID
+CREATE TABLE HistoriquePublication(
+    userId  INTEGER REFERENCES Users(id),
+    publiId INTEGER,
+    action VARCHAR(255), --  ou ajouter ou voir ou repondre à une publication
+    dateAction DATE NOT NULL,
+    idReaction INTEGER REFERENCES Reaction(id),
+    PRIMARY KEY (userId, publiId, dateAction),
+    FOREIGN KEY (userId) REFERENCES Users(id) ON UPDATE CASCADE,
+    FOREIGN KEY (publiId) REFERENCES Publication(id) ON DELETE CASCADE
+);
 
 -- CREATE TABLE HistoriqueReaction(
 --     idUser INTEGER,
