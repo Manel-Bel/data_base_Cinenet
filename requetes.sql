@@ -1,4 +1,12 @@
--- 1/ une requête qui porte sur au moins trois tables
+SELECT id, titre,realisation FROM Film limit 10;
+SELECT id, auteur, titre, categorie from Discussion limit 5;
+SELECT id, auteur, titre, parentId FROM Publication LIMIT 5;
+select id, nomEvent, dateEvent, organisateur from EventParticulier limit 25;
+select * from ParticipationEvent;
+
+
+
+-- une requête qui porte sur au moins trois tables
 -- quels sont tous les amis du realisateur "paul06" qui suivent le STUDIO MAPPA
 SELECT u.id, u.username
 FROM Users u 
@@ -168,7 +176,7 @@ ORDER BY nombre_participants;
 
 
 -- 14/— deux requêtes équivalentes exprimant une condition de totalité, l’une avec des sous requêtes corrélées et l’autre avec de l’agrégation
--- Quels sont les utilisateurs ayant participé UNIQUEMENT à tous les événements organisés par un studio HBO et ne pas avoir participé au évènement de studio adverse NETFLIX ?
+-- Quels sont les utilisateurs ayant participé UNIQUEMENT à tous les événements organisés par un studio et ne pas avoir participé au évènement de studio adverse  ?
 SELECT u.id, u.username
 FROM Users u
 WHERE NOT EXISTS (
@@ -274,70 +282,47 @@ ORDER BY nomEvent DESC;
 --16/ Une requête récursive;
 -- niveau de chaque publication sur le forum
 WITH RECURSIVE publicationNiveau AS 
-    (SELECT id as id_publication , auteur, titre, parentId,
-        0 AS niveau 
+    (SELECT id as id_publication , auteur, titre, parentId, 0 AS niveau 
     FROM  Publication
     WHERE parentId IS NULL
 
     UNION ALL
-    -- Recursive case: 
-    SELECT  p.id AS id_publication, p.auteur, p.titre, p.parentId,
-        pn.niveau + 1 AS niveau
+
+    SELECT  p.id AS id_publication, p.auteur, p.titre, p.parentId, pn.niveau + 1 AS niveau
     FROM Publication p
     JOIN publicationNiveau pn 
     ON p.parentId = pn.id_publication
 )
-
 SELECT id_publication, auteur, titre, parentId, niveau
 FROM  publicationNiveau
 ORDER BY  niveau, id_publication;
 
+
 --17/ Une requête récursive;
 -- calcule de la profondeur d'un publication  (exemple publication 1)
-WITH RECURSIVE publicationDepth AS(   
-    SELECT id as id_publication,parentId, 0 AS profondeur
-    FROM  Publication
-    WHERE id = 1
-    UNION ALL
-
-    SELECT p.id AS id_publication, p.parentId, d.profondeur + 1 as profondeur
-    FROM Publication p
-    JOIN publicationDepth d ON p.parentId = d.id_publication 
-)
-, MaxProfondeur AS (
-    SELECT id_publication, MAX(profondeur) AS hauteur
-    FROM publicationDepth
-    GROUP BY id_publication
-)
-SELECT p.id AS id_publication, p.auteur, p.titre, p.parentId, COALESCE(mp.hauteur, 0)
-FROM publication p 
-JOIN MaxProfondeur mp ON p.id = mp.id_publication
-WHERE p.id= 1
-;
-
---18/ Une requête récursive;
--- chaine d'amitié de user 1 à revoir 
-WITH RECURSIVE chaineAmitie AS(
-    SELECT user1 as id_user, user2 as ami, 1 AS niveau
+WITH RECURSIVE ChaineAmitie AS (
+    SELECT  user1,  user2,  ARRAY[user1, user2] AS chemin
     FROM Amis
     WHERE user1 = 1
     UNION
-    SELECT a.user1 as id_user, a.user2 as ami, ca.niveau + 1 as niveau
-    FROM Amis a 
-    JOIN chaineAmitie as ca 
-    ON a.user1 = ca.ami 
-    )
-SELECT DISTINCT
-ca.ami,
-u.username,
-ca.niveau
-FROM  ChaineAmitie ca
-JOIN  Users u ON ca.ami = u.id
-ORDER BY ca.niveau, ca.ami;
+    SELECT ca.user1, a.user2, chemin || a.user2
+    FROM Amis a
+    JOIN ChaineAmitie ca ON a.user1 = ca.user2
+),
+NomChaine AS (
+    SELECT c.chemin, string_agg(u.username, ' -> ') AS chaine_amitie
+    FROM ChaineAmitie c
+    JOIN Users u ON u.id = ANY(c.chemin)
+    GROUP BY c.chemin
+)
+SELECT chaine_amitie
+FROM NomChaine
+ORDER BY array_length(chemin, 1) DESC
+LIMIT 1;
 
 
 
---19/ Une requête récursive;
+--18/ Une requête récursive;
 --Requete avec fenetrage 
 --La requête vise à identifier les 10 événements les plus populaires, organisés par des utilisateurs ayant le rôle 'acteur'
 --, pour chaque mois de l'année 2025. La popularité est déterminée par le nombre de participants à chaque événement.
