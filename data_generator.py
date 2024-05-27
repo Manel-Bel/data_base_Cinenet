@@ -91,7 +91,6 @@ def generate_follows(n):
                 writer.writerow([userId, follower])
                 unique_pairs.add(pair)  # Add the new pair to the set to ensure uniqueness
 
-
 def generate_series(n, max_genre_id):
     path = os.path.join(base_path, 'series.csv')  # Conserve le chemin original basé sur base_path
     with open(path, mode='w', newline='') as file:
@@ -118,7 +117,6 @@ def generate_events(n):
             nbPlaceReserve = random.randint(0, nbPlaceDispo) 
             idOrganisateur = random.randint(1, 100)
             writer.writerow([dateEvent, lieuEvent, nomEvent, nbPlaceDispo, nbPlaceReserve, idOrganisateur])
-
 
 # Table 'SujetPublication'
 def generate_sujet_publication(n):
