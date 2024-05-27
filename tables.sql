@@ -114,7 +114,7 @@ CREATE TABLE Discussion(
 );
 
 CREATE TABLE Publication( 
-    id INTEGER PRIMARY KEY,
+    id SERIAL PRIMARY KEY,
     auteur INTEGER REFERENCES Users(id),
     discussionId INTEGER REFERENCES Discussion(id),
     titre VARCHAR(200) NOT NULL,
