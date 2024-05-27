@@ -278,47 +278,28 @@ SELECT id_publication, auteur, titre, parentId, niveau
 FROM  publicationNiveau
 ORDER BY  niveau, id_publication;
 
--- calcule de la profondeur d'un publication  (exemple publication 1)
-WITH RECURSIVE publicationDepth AS(   
-    SELECT id as id_publication,parentId, 0 AS profondeur
-    FROM  Publication
-    WHERE id = 1
-    UNION ALL
 
-    SELECT p.id AS id_publication, p.parentId, d.profondeur + 1 as profondeur
-    FROM Publication p
-    JOIN publicationDepth d ON p.parentId = d.id_publication 
-)
-, MaxProfondeur AS (
-    SELECT id_publication, MAX(profondeur) AS hauteur
-    FROM publicationDepth
-    GROUP BY id_publication
-)
-SELECT p.id AS id_publication, p.auteur, p.titre, p.parentId, COALESCE(mp.hauteur, 0)
-FROM publication p 
-JOIN MaxProfondeur mp ON p.id = mp.id_publication
-WHERE p.id= 1
-;
-
--- chaine d'amitié de user 1 à revoir 
-WITH RECURSIVE chaineAmitie AS(
-    SELECT user1 as id_user, user2 as ami, 1 AS niveau
+-- chaine d'amitié de user 1 
+WITH RECURSIVE ChaineAmitie AS (
+    SELECT  user1,  user2,  ARRAY[user1, user2] AS chemin
     FROM Amis
     WHERE user1 = 1
     UNION
-    SELECT a.user1 as id_user, a.user2 as ami, ca.niveau + 1 as niveau
-    FROM Amis a 
-    JOIN chaineAmitie as ca 
-    ON a.user1 = ca.ami 
-    )
-SELECT DISTINCT
-ca.ami,
-u.username,
-ca.niveau
-FROM  ChaineAmitie ca
-JOIN  Users u ON ca.ami = u.id
-ORDER BY ca.niveau, ca.ami;
-
+    
+    SELECT ca.user1, a.user2, chemin || a.user2
+    FROM Amis a
+    JOIN ChaineAmitie ca ON a.user1 = ca.user2
+),
+NomChaine AS (
+    SELECT c.chemin, string_agg(u.username, ' -> ') AS chaine_amitie
+    FROM ChaineAmitie c
+    JOIN Users u ON u.id = ANY(c.chemin)
+    GROUP BY c.chemin
+)
+SELECT chaine_amitie
+FROM NomChaine
+ORDER BY array_length(chemin, 1) DESC
+LIMIT 1;
 
 --Requete avec fenetrage 
 --La requête vise à identifier les 10 événements les plus populaires, organisés par des utilisateurs ayant le rôle 'acteur'
