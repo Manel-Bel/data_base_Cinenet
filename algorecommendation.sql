@@ -5,7 +5,7 @@ WITH PositiveReactions AS ( --dayen
     SELECT R.publiId,
         COUNT(*) AS nb_positive_reaction
     FROM Reaction R
-    WHERE R.type IN ('Like', 'Fun', 'Love')
+    WHERE R.typer IN ('Like', 'Fun', 'Love')
     AND NOT EXISTS (
         SELECT 1
         FROM HistoriquePublication hp
@@ -38,24 +38,17 @@ WITH UserHistory AS (
     SELECT hp.publiId
     FROM HistoriquePublication hp
     WHERE
-        hp.userId = [CurrentUserId] 
+        hp.userId = 208
 ),
 
 
 -- Étape 2 : Filtrer les publications avec des bonnes réactions
 UserLikedPublications AS (
-    SELECT
-        R.publiId
-    FROM
-        Reaction R
-    WHERE
-        R.userId = [CurrentUserId] -- id de l'utilisateur actuel
-        AND R.type IN ('Like', 'Fun', 'Love')
-        AND EXISTS (
-            SELECT 1
-            FROM UserHistory UH
-            WHERE UH.publiId = R.publiId
-        )
+    SELECT uh.publiId
+    FROM UserHistory uh
+    JOIN Reaction r ON uh.publiId = r.publiId
+    WHERE r.userId = 208  -- Remplacez [CurrentUserId] par l'ID de l'utilisateur actuel
+    AND r.typeR IN ('Like', 'Fun', 'Love')
 ),
 
 -- Étape 3 : Trouver les films et séries associés à ces publications
@@ -119,7 +112,7 @@ RecommendedPublications AS (
         AND NOT EXISTS (
             SELECT 1
             FROM HistoriquePublication HP
-            WHERE HP.idPubli = P.id AND HP.userId = [CurrentUserId]
+            WHERE HP.idPubli = P.id AND HP.userId = 208
         )
 )
 --juste un plus pour ce troisieme indice 

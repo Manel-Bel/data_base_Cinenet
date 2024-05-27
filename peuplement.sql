@@ -39,13 +39,20 @@
 
 \copy MotsClesPublication(publiId, motCleId) FROM 'CSV/mots_cles_publication.csv' WITH (FORMAT csv, HEADER true);
 
- \copy Reaction(id,publiId,userId,type) FROM 'CSV/reactions.csv' WITH (FORMAT csv, HEADER true);
+ \copy Reaction(id,publiId,userId,typeR) FROM 'CSV/reactions.csv' WITH (FORMAT csv, HEADER true);
 
  \copy Archive(idArchive, dateArchivage, raison, eventId) FROM 'CSV/archive.csv' WITH (FORMAT csv, HEADER true);
 
  \copy Message(id, expéditeur, destinataire, contenu) FROM 'CSV/message.csv' WITH (FORMAT csv, HEADER true);
 
 \copy HistoriquePublication(userId, publiID, action, dateAction,idReaction) FROM 'CSV/historique_publication.csv' WITH (FORMAT csv, HEADER true);
+
+\copy PublicationEventPart(publiId, eventId) FROM 'CSV/publication_event_part.csv' WITH (FORMAT csv, HEADER true);
+
+\copy PublicationFilm(publiId, FilmId) FROM 'CSV/publication_film.csv' WITH (FORMAT csv, HEADER true);
+
+\copy PublicationSerie(publiId, SerieId) FROM 'CSV/publication_serie.csv' WITH (FORMAT csv, HEADER true);
+
 
 
 -- ---------------------------------------------------------

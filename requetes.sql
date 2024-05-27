@@ -70,27 +70,30 @@ ORDER BY f.titre ;
 
 
 
---Compter le nombre de publications par utilisateur, mais seulement pour ceux ayant plus de 5 publications
+--Compter le nombre de publications par utilisateur, mais seulement pour ceux ayant plus de 3 publications
 SELECT auteur, COUNT(*) AS nombre_publications
 FROM Publication
 GROUP BY auteur
-HAVING COUNT(*) > 5;
+HAVING COUNT(*) > 3;
 
 
 -- Calculer le nombre moyen d'épisodes par série pour chaque genre, en incluant seulement les genres avec plus de 2 séries
-SELECT g.nom, AVG(s.nbreEpisodes) AS moyenne_episodes
+SELECT g.name, ROUND(AVG(s.nbreEpisodes), 2) AS moyenne_episodes
 FROM Serie s
-JOIN GenreCinemato g ON s.genre = g.id
-GROUP BY g.nom
-HAVING COUNT(s.id) > 2;
+JOIN SerieGenre sg ON s.id = sg.serieId
+JOIN GenreCinemato g ON sg.genre = g.id
+GROUP BY g.name
+HAVING COUNT(DISTINCT s.id) > 2;
+
+
 
 
 --Compter le nombre de réactions de chaque type pour les publications ayant reçu plus de 10 réactions en total
 
-SELECT idPubli, type, COUNT(*) AS nombre_reactions
+SELECT publiId, type, COUNT(*) AS nombre_reactions
 FROM Reaction
-GROUP BY idPubli, type
-HAVING COUNT(*) > 10;
+GROUP BY publiId, type
+HAVING COUNT(*) > 3;
 
 
 -- Identifier les événements avec un nombre de places disponibles inférieur à 10% du total initial
@@ -116,10 +119,16 @@ ORDER BY year DESC
 
 
 
---Utilisation d'un RIGHT JOIN pour trouver tous les films et leur genre, même ceux sans genre spécifié
-SELECT f.titre, g.nom
-FROM GenreCinemato g
-RIGHT JOIN Film f ON f.genre = g.nom
+--Utilisation d'un LEFT JOIN pour trouver tous les films et leur genre, même ceux sans genre spécifié
+-- SELECT f.titre, g.nom
+-- FROM GenreCinemato g
+-- RIGHT JOIN Film f ON f.genre = g.nom
+-- ORDER BY f.titre;
+
+SELECT f.titre, g.name AS genre
+FROM Film f
+LEFT JOIN FilmGenre fg ON f.id = fg.filmId
+LEFT JOIN GenreCinemato g ON fg.genreId = g.id
 ORDER BY f.titre;
 
 
@@ -330,7 +339,7 @@ WITH MonthlyEventOrganizers AS (
     INNER JOIN Users U ON E.organisateur = U.id
 
     INNER JOIN ParticipationEvent P ON E.id = P.eventId
-    WHERE U.role = 'acteur' AND EXTRACT(YEAR FROM E.dateEvent) = 2025
+    WHERE U.role = 'lamda' AND EXTRACT(YEAR FROM E.dateEvent) = 2025
     GROUP BY
         E.id, E.organisateur, U.username, EXTRACT(MONTH FROM E.dateEvent), EXTRACT(YEAR FROM E.dateEvent)
 )

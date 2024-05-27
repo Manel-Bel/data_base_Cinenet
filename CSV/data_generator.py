@@ -219,7 +219,7 @@ def generate_discussions(n):
 
 
 # Table 'ParticipationEvent'
-def generate_participation_event(n, max_event_id):
+def generate_participation_event2(n, max_event_id):
     with open(os.path.join(base_path, 'participation_event.csv'), mode='w', newline='') as file:
         writer = csv.writer(file)
         writer.writerow(["idUser", "idEvent"])
@@ -227,7 +227,7 @@ def generate_participation_event(n, max_event_id):
         unique_pairs = set()
         
         while len(unique_pairs) < n:
-            idUser = random.randint(1, 100)  # Assuming 100 users
+            idUser = random.randint(1, 300)  # Assuming 100 users
             idEvent = random.randint(1, max_event_id)  # Utiliser max_event_id pour définir le nombre max d'événements
             
             # Créer une paire tuple de idUser et idEvent
@@ -238,6 +238,21 @@ def generate_participation_event(n, max_event_id):
                 writer.writerow([idUser, idEvent])
                 unique_pairs.add(pair)  # Ajouter la paire à l'ensemble pour suivre l'unicité
 
+def generate_participation_event(n, max_event_id):
+    base_path = os.getcwd()  # Utilise le répertoire de travail courant
+    with open(os.path.join(base_path, 'participation_event.csv'), mode='w', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerow(["idUser", "idEvent"])
+        
+        unique_pairs = set()
+
+        while len(unique_pairs) < n:
+            idUser = random.randint(151, 300)  # Utiliser des ID utilisateurs de 151 à 300
+            idEvent = random.randint(1, max_event_id)  # Utiliser max_event_id pour définir le nombre max d'événements
+            
+            if (idUser, idEvent) not in unique_pairs:
+                writer.writerow([idUser, idEvent])
+                unique_pairs.add((idUser, idEvent))
 
 
 # Table 'Archive'
@@ -285,26 +300,26 @@ def generate_reactions2(n, max_pub_id):
                 writer.writerow([idPubli, idUser, type])
                 used_pairs.add(pair)
 
-def generate_reactions(n, max_pub_id):
-    path = os.path.join(base_path, 'reactions.csv')
-    with open(path, mode='w', newline='') as file:
-        writer = csv.writer(file)
-        writer.writerow(["id", "publiId", "userId", "type"])  # Ajout de la colonne 'id'
-        types = ['Like', 'Dislike', 'Neutre', 'Fun', 'Sad', 'Angry', 'Love']  # Assurez-vous que cela inclut tous les types possibles
-        valid_pub_ids = set(range(1, max_pub_id + 1))  # Assurez-vous que max_pub_id est le maximum réel dans 'publication'
-        used_pairs = set()
-        id_counter = 1  # Compteur pour les ID, commence à 1
+# def generate_reactions(n, max_pub_id):
+#     path = os.path.join(base_path, 'reactions.csv')
+#     with open(path, mode='w', newline='') as file:
+#         writer = csv.writer(file)
+#         writer.writerow(["id", "publiId", "userId", "typeR"])  # Ajout de la colonne 'id'
+#         types = ['Like', 'Dislike', 'Neutre', 'Fun', 'Sad', 'Angry', 'Love']  # Assurez-vous que cela inclut tous les types possibles
+#         valid_pub_ids = set(range(1, max_pub_id + 1))  # Assurez-vous que max_pub_id est le maximum réel dans 'publication'
+#         used_pairs = set()
+#         id_counter = 1  # Compteur pour les ID, commence à 1
 
-        while len(used_pairs) < n:
-            publiId = random.choice(list(valid_pub_ids))
-            userId = random.randint(1, 100)  # Supposer 100 utilisateurs max
-            pair = (publiId, userId)
+#         while len(used_pairs) < n:
+#             publiId = random.choice(list(valid_pub_ids))
+#             userId = random.randint(1, 100)  # Supposer 100 utilisateurs max
+#             pair = (publiId, userId)
 
-            if pair not in used_pairs:
-                reaction_type = random.choice(types)
-                writer.writerow([id_counter, publiId, userId, reaction_type])  # Ajout de l'ID à la ligne
-                used_pairs.add(pair)
-                id_counter += 1  # Incrémenter l'ID pour chaque nouvelle entrée
+#             if pair not in used_pairs:
+#                 reaction_type = random.choice(types)
+#                 writer.writerow([id_counter, publiId, userId, reaction_type])  # Ajout de l'ID à la ligne
+#                 used_pairs.add(pair)
+#                 id_counter += 1  # Incrémenter l'ID pour chaque nouvelle entrée
 
 
 
@@ -423,20 +438,20 @@ def generate_event_particulier(n):
         
         for i in range(1, n+1):
             id = i
-            auteur = random.randint(1, 100)  # Assuming there are 100 users
+            auteur = random.randint(1, 300)  # Assuming there are 100 users
             nomEvent = fake.sentence(nb_words=5)
             dateEvent = fake.date_between(start_date="today", end_date="+2y").isoformat()
             lieuEvent = fake.city()
             nbPlaceDispo = random.randint(50, 500)
             nbPlaceReserve = random.randint(0, nbPlaceDispo)  # Ensure this number is less than or equal to nbPlaceDispo
-            organisateur = random.randint(1, 100) if random.choice([True, False]) else None
+            organisateur = random.randint(1, 300) if random.choice([True, False]) else None
             
             # Generating between 1 and 5 random web links and formatting them as a PostgreSQL array
             liens_web = '{' + ', '.join([fake.url() for _ in range(random.randint(1, 5))]) + '}'
 
             writer.writerow([id, auteur, nomEvent, dateEvent, lieuEvent, nbPlaceDispo, nbPlaceReserve, organisateur, liens_web])
 
-def generate_interesse_event(n, max_user_id, max_event_id):
+def generate_interesse_event2(n, max_user_id, max_event_id):
     with open(os.path.join(base_path, 'InteresseEvent.csv'), mode='w', newline='') as file:
         writer = csv.writer(file)
         writer.writerow(["userId", "eventId"])
@@ -448,6 +463,22 @@ def generate_interesse_event(n, max_user_id, max_event_id):
             eventId = random.randint(1, max_event_id)  # Assuming max_event_id is the maximum number of events
 
             # Ensure the pair is unique before writing
+            if (userId, eventId) not in unique_pairs:
+                writer.writerow([userId, eventId])
+                unique_pairs.add((userId, eventId))
+
+def generate_interesse_event(n, max_event_id):
+    base_path = os.getcwd()  # Utilise le répertoire de travail courant
+    with open(os.path.join(base_path, 'InteresseEvent.csv'), mode='w', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerow(["userId", "eventId"])
+        
+        unique_pairs = set()
+
+        while len(unique_pairs) < n:
+            userId = random.randint(1, 150)  # Utiliser des ID utilisateurs de 1 à 150
+            eventId = random.randint(1, max_event_id)  # Utiliser max_event_id pour définir le nombre max d'événements
+            
             if (userId, eventId) not in unique_pairs:
                 writer.writerow([userId, eventId])
                 unique_pairs.add((userId, eventId))
@@ -467,23 +498,133 @@ def generate_historique_publication2(n, max_user_id, max_publi_id):
 
             writer.writerow([idUser, idPubli, action, dateAction])
 
-def generate_historique_publication(n, max_user_id, max_publi_id, max_reaction_id):
-    path = os.path.join(base_path, 'historique_publication.csv')
-    with open(path, mode='w', newline='') as file:
-        writer = csv.writer(file)
-        writer.writerow(["userId", "publiId", "action", "dateAction", "idReaction"])
+# def generate_historique_publication(n, max_user_id, max_publi_id, max_reaction_id):
+#     path = os.path.join(base_path, 'historique_publication.csv')
+#     with open(path, mode='w', newline='') as file:
+#         writer = csv.writer(file)
+#         writer.writerow(["userId", "publiId", "action", "dateAction", "idReaction"])
+        
+#         actions = ["ajouter", "voir", "repondre à une publication"]  # Définir les types d'actions possibles
+
+#         for _ in range(n):
+#             userId = random.randint(1, max_user_id)  # Choix d'un userId existant
+#             publiId = random.randint(1, max_publi_id)  # Choix d'un publiId existant
+#             action = random.choice(actions)  # Sélection aléatoire d'une action
+#             dateAction = fake.date_between(start_date="-2y", end_date="today").isoformat()  # Génération d'une date d'action
+#             idReaction = random.randint(1, max_reaction_id) if action != "ajouter" else None  # Assumer une réaction si l'action n'est pas "ajouter"
+
+#             # Vérifier si l'id de réaction est requis pour toutes les actions; si non, ajuster la condition ci-dessus
+#             writer.writerow([userId, publiId, action, dateAction, idReaction])
+            
+def generate_historique_and_reactions2(histo_count, reaction_count, max_user_id, max_publi_id):
+    historique_path = 'historique_publication.csv'
+    reaction_path = 'reactions.csv'
+    
+    with open(historique_path, mode='w', newline='') as histo_file, \
+         open(reaction_path, mode='w', newline='') as reaction_file:
+        
+        histo_writer = csv.writer(histo_file)
+        reaction_writer = csv.writer(reaction_file)
+        
+        histo_writer.writerow(["userId", "publiId", "action", "dateAction", "idReaction"])
+        reaction_writer.writerow(["id", "publiId", "userId", "typeR"])  # Ajout de la colonne 'id'
         
         actions = ["ajouter", "voir", "repondre à une publication"]  # Définir les types d'actions possibles
+        types = ['Like', 'Dislike', 'Neutre', 'Fun', 'Sad', 'Angry', 'Love']  # Types de réactions
+        used_pairs = set()
+        id_counter = 1  # Compteur pour les ID des réactions
+        
+        # Générer les entrées de l'historique
+        historique_entries = []
+        for _ in range(histo_count):
+            userId = random.randint(1, max_user_id)
+            publiId = random.randint(1, max_publi_id)
+            action = random.choice(actions)
+            dateAction = fake.date_between(start_date="-2y", end_date="today").isoformat()
+            idReaction = None  # Initialiser l'idReaction à None pour "ajouter" et autres
+            
+            if action != "ajouter":
+                idReaction = id_counter
+                reaction_type = random.choice(types)
+                reaction_writer.writerow([id_counter, publiId, userId, reaction_type])
+                id_counter += 1
+            
+            historique_entries.append((userId, publiId, action, dateAction, idReaction))
+            histo_writer.writerow([userId, publiId, action, dateAction, idReaction])
+            used_pairs.add((userId, publiId))
+        
+        # Générer les réactions additionnelles si nécessaire
+        while len(used_pairs) < reaction_count:
+            userId = random.randint(1, max_user_id)
+            publiId = random.randint(1, max_publi_id)
+            if (userId, publiId) in used_pairs:
+                continue
+            
+            reaction_type = random.choice(types)
+            reaction_writer.writerow([id_counter, publiId, userId, reaction_type])
+            id_counter += 1
+            used_pairs.add((userId, publiId))
 
-        for _ in range(n):
-            userId = random.randint(1, max_user_id)  # Choix d'un userId existant
-            publiId = random.randint(1, max_publi_id)  # Choix d'un publiId existant
-            action = random.choice(actions)  # Sélection aléatoire d'une action
-            dateAction = fake.date_between(start_date="-2y", end_date="today").isoformat()  # Génération d'une date d'action
-            idReaction = random.randint(1, max_reaction_id) if action != "ajouter" else None  # Assumer une réaction si l'action n'est pas "ajouter"
+def generate_historique_and_reactions(histo_count, reaction_count, max_user_id, max_publi_id):
+    historique_path = 'historique_publication.csv'
+    reaction_path = 'reactions.csv'
+    
+    with open(historique_path, mode='w', newline='') as histo_file, \
+         open(reaction_path, mode='w', newline='') as reaction_file:
+        
+        histo_writer = csv.writer(histo_file)
+        reaction_writer = csv.writer(reaction_file)
+        
+        histo_writer.writerow(["userId", "publiId", "action", "dateAction", "idReaction"])
+        reaction_writer.writerow(["id", "publiId", "userId", "typeR"])  # Ajout de la colonne 'id'
+        
+        actions = ["ajouter", "voir", "repondre à une publication"]  # Définir les types d'actions possibles
+        types = ['Like', 'Dislike', 'Neutre', 'Fun', 'Sad', 'Angry', 'Love']  # Types de réactions
+        used_pairs = set()
+        id_counter = 1  # Compteur pour les ID des réactions
+        
+        # Générer les entrées de l'historique
+        historique_entries = []
+        reaction_entries = []
+        
+        for _ in range(histo_count):
+            userId = random.randint(1, max_user_id)
+            publiId = random.randint(1, max_publi_id)
+            action = random.choice(actions)
+            dateAction = fake.date_between(start_date="-2y", end_date="today").isoformat()
+            idReaction = None  # Initialiser l'idReaction à None pour "ajouter" et autres
+            
+            if action != "ajouter":
+                if (publiId, userId) not in used_pairs:
+                    idReaction = id_counter
+                    reaction_type = random.choice(types)
+                    reaction_entries.append([id_counter, publiId, userId, reaction_type])
+                    used_pairs.add((publiId, userId))
+                    id_counter += 1
+            
+            historique_entries.append([userId, publiId, action, dateAction, idReaction])
+            used_pairs.add((publiId, userId))
 
-            # Vérifier si l'id de réaction est requis pour toutes les actions; si non, ajuster la condition ci-dessus
-            writer.writerow([userId, publiId, action, dateAction, idReaction])
+        # Écrire les entrées de l'historique dans le fichier CSV
+        for entry in historique_entries:
+            histo_writer.writerow(entry)
+
+        # Écrire les entrées de réaction dans le fichier CSV
+        for entry in reaction_entries:
+            reaction_writer.writerow(entry)
+
+        # Générer les réactions additionnelles si nécessaire
+        while len(reaction_entries) < reaction_count:
+            publiId = random.randint(1, max_publi_id)
+            userId = random.randint(1, max_user_id)
+            if (publiId, userId) in used_pairs:
+                continue
+            
+            reaction_type = random.choice(types)
+            reaction_writer.writerow([id_counter, publiId, userId, reaction_type])
+            reaction_entries.append([id_counter, publiId, userId, reaction_type])
+            id_counter += 1
+            used_pairs.add((publiId, userId))
 
 def generate_film_genre(n, max_film_id, max_genre_id):
     path = os.path.join(base_path, 'film_genre.csv')
@@ -515,11 +656,52 @@ def generate_serie_genre(n, max_serie_id, max_genre_id):
                 writer.writerow([serieId, genreId])
                 unique_pairs.add((serieId, genreId))
 
+def generate_publication_event_part(n):
+    with open('publication_event_part.csv', mode='w', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerow(["publiId", "eventId"])
+        publi_ids = range(1, 100)  # Assumer 100 publications existantes
+        event_ids = range(1, 201)  # Assumer 200 événements existants
+        pairs = set()
+
+        while len(pairs) < n:
+            pair = (random.choice(publi_ids), random.choice(event_ids))
+            if pair not in pairs:
+                writer.writerow(pair)
+                pairs.add(pair)
+
+def generate_publication_film(n):
+    with open('publication_film.csv', mode='w', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerow(["publiId", "FilmId"])
+        publi_ids = range(1, 100)  # Assumer 100 publications existantes
+        film_ids = range(1, 101)   # Assumer 100 films existants
+        pairs = set()
+
+        while len(pairs) < n:
+            pair = (random.choice(publi_ids), random.choice(film_ids))
+            if pair not in pairs:
+                writer.writerow(pair)
+                pairs.add(pair)
+
+def generate_publication_serie(n):
+    with open('publication_serie.csv', mode='w', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerow(["publiId", "SerieId"])
+        publi_ids = range(1, 100)  # Assumer 100 publications existantes
+        serie_ids = range(1, 101)  # Assumer 100 séries existantes
+        pairs = set()
+
+        while len(pairs) < n:
+            pair = (random.choice(publi_ids), random.choice(serie_ids))
+            if pair not in pairs:
+                writer.writerow(pair)
+                pairs.add(pair)
 
 # activation de ses fonctions
 generate_genre_cinemato(24)  # Générer des genres cinématographiques, en assurant qu'il y en a assez pour les références
 
-generate_users(100) 
+generate_users(300) 
 generate_films(100)  
 generate_series(100, 24)  # Générer 100 séries en s'assurant que les genres existent
 generate_publications(100)  
@@ -531,12 +713,11 @@ generate_discussions(50)
 generate_film_genre(100, 50, 24)  # Supposons que vous voulez 75 associations film-genre
 generate_serie_genre(100, 100, 24)  # 100 associations série-genre
 
-generate_participation_event(50, 20)  # Générer 50 participations à des événements, avec un maximum de 20 événements différents
 generate_archive(30)        
 generate_commentaire(100)
 
-generate_reactions(200, 100)  # Générer 200 réactions pour 100 publications
-
+# generate_reactions(600, 100)  # Générer 200 réactions pour 100 publications
+generate_historique_and_reactions(1800,1900,300,100)
 generate_message(50)             
 # generate_notification(80) 
 
@@ -546,9 +727,14 @@ generate_follows(100)
 generate_filme_publication(100)
 generate_mots_cles_publication(100, 100, 30)  # Supposons que vous ayez 100 publications et 30 mots clés
 
-generate_event_particulier(100)  # Generate 50 particular events
-generate_interesse_event(200, 100, 50)  # Generate 200 entries with up to 100 users and 50 events
-generate_historique_publication(100, 100, 50, 200)
+generate_event_particulier(200)  # Generate 50 particular events
+generate_interesse_event(700,200)  # Generate 200 entries with up to 100 users and 50 events
+generate_participation_event(700,200)  # Générer 50 participations à des événements, avec un maximum de 20 événements différents
 
+# generate_historique_publication(1800, 300,100,600)
+
+generate_publication_event_part(100)
+generate_publication_film(100)
+generate_publication_serie(100)
 
 

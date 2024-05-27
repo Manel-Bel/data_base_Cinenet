@@ -64,38 +64,38 @@ CREATE TABLE GenreCinemato(
     parent INTEGER REFERENCES GenreCinemato(id)
 );
 
--- CHANGEMENT : genre
-CREATE TABLE Film(
-    id          SERIAL PRIMARY KEY,
-    titre       VARCHAR(64) NOT NULL,
-    resume      TEXT,
-    realisation DATE,
-    duree       INTEGER -- en minutes
-);
+    -- CHANGEMENT : genre
+    CREATE TABLE Film(
+        id          SERIAL PRIMARY KEY,
+        titre       VARCHAR(64) NOT NULL,
+        resume      TEXT,
+        realisation DATE,
+        duree       INTEGER -- en minutes
+    );
 
--- CHANGEMENt NV TABLE
-CREATE TABLE FilmGenre(
-    filmId      INTEGER REFERENCES Film(id),
-    genreId       INTEGER REFERENCES GenreCinemato(id),
-    PRIMARY KEY (filmId, genreId)
-);
+    -- CHANGEMENt NV TABLE
+    CREATE TABLE FilmGenre(
+        filmId      INTEGER REFERENCES Film(id),
+        genreId       INTEGER REFERENCES GenreCinemato(id),
+        PRIMARY KEY (filmId, genreId)
+    );
 
 
-CREATE TABLE Serie(
-    id          SERIAL PRIMARY KEY,
-    saison      SMALLINT,
-    titre       VARCHAR(64) NOT NULL,
-    nbreEpisodes SMALLINT,
-    dureeParEpisode INTEGER, -- en minutes
-    datePremiere DATE
-    -- genre        INTEGER REFERENCES GenreCinemato(id)
-);
+    CREATE TABLE Serie(
+        id          SERIAL PRIMARY KEY,
+        saison      SMALLINT,
+        titre       VARCHAR(64) NOT NULL,
+        nbreEpisodes SMALLINT,
+        dureeParEpisode INTEGER, -- en minutes
+        datePremiere DATE
+        -- genre        INTEGER REFERENCES GenreCinemato(id)
+    );
 
-CREATE TABLE SerieGenre(
-    serieId      INTEGER REFERENCES Serie(id),
-    genre       INTEGER REFERENCES GenreCinemato(id),
-    PRIMARY KEY (serieId, genre)
-);
+    CREATE TABLE SerieGenre(
+        serieId      INTEGER REFERENCES Serie(id),
+        genre       INTEGER REFERENCES GenreCinemato(id),
+        PRIMARY KEY (serieId, genre)
+    );
 
 
 CREATE TABLE MotsCles(
@@ -146,7 +146,7 @@ CREATE TABLE Reaction(
     id SERIAL PRIMARY KEY,
     publiId INTEGER REFERENCES Publication(id),
     userId INTEGER,
-    type TypeReaction,
+    typeR TypeReaction,
     UNIQUE (publiId, userId),
     FOREIGN KEY (userId) REFERENCES Users(id),
     FOREIGN KEY (publiId) REFERENCES Publication(id) ON DELETE CASCADE
