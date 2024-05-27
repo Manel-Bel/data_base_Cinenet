@@ -65,7 +65,6 @@ def generate_films(n):
             duree = random.randint(60, 180)
             writer.writerow([i, titre, resume, realisation, duree])
 
-
 def generate_publications(n):
     path = os.path.join(base_path, 'publications.csv')
     with open(path, mode='w', newline='') as file:
@@ -87,19 +86,6 @@ def generate_publications(n):
                 parentId = random.randint(1, i-1)  # Assurer que le parentId est toujours un ID existant
                 
             writer.writerow([i, auteur, discussionId, titre, contenu, datePublication, parentId])
-
-
-
-# Table 'Role'
-def generate_roles():
-    roles = ['lamda', 'Realisateur', 'acteur', 'organisateurSalle', 'Cinema' ,'Club', 'Studio', 'organisateurEvent']
-    with open(os.path.join(base_path, 'roles.csv'), mode='w', newline='') as file:
-
-        writer = csv.writer(file)
-        writer.writerow(["name"])
-        for role in roles:
-            writer.writerow([role])
-
 
 # Table 'Follow'
 def generate_follows(n):
@@ -124,7 +110,6 @@ def generate_follows(n):
             if pair not in unique_pairs:
                 writer.writerow([userId, follower])
                 unique_pairs.add(pair)  # Add the new pair to the set to ensure uniqueness
-
 
 # Table 'Serie'
 def generate_series2(n, max_genre_id):
@@ -300,29 +285,6 @@ def generate_reactions2(n, max_pub_id):
                 writer.writerow([idPubli, idUser, type])
                 used_pairs.add(pair)
 
-# def generate_reactions(n, max_pub_id):
-#     path = os.path.join(base_path, 'reactions.csv')
-#     with open(path, mode='w', newline='') as file:
-#         writer = csv.writer(file)
-#         writer.writerow(["id", "publiId", "userId", "typeR"])  # Ajout de la colonne 'id'
-#         types = ['Like', 'Dislike', 'Neutre', 'Fun', 'Sad', 'Angry', 'Love']  # Assurez-vous que cela inclut tous les types possibles
-#         valid_pub_ids = set(range(1, max_pub_id + 1))  # Assurez-vous que max_pub_id est le maximum réel dans 'publication'
-#         used_pairs = set()
-#         id_counter = 1  # Compteur pour les ID, commence à 1
-
-#         while len(used_pairs) < n:
-#             publiId = random.choice(list(valid_pub_ids))
-#             userId = random.randint(1, 100)  # Supposer 100 utilisateurs max
-#             pair = (publiId, userId)
-
-#             if pair not in used_pairs:
-#                 reaction_type = random.choice(types)
-#                 writer.writerow([id_counter, publiId, userId, reaction_type])  # Ajout de l'ID à la ligne
-#                 used_pairs.add(pair)
-#                 id_counter += 1  # Incrémenter l'ID pour chaque nouvelle entrée
-
-
-
 
 # Table 'Message'
 def generate_message(n):
@@ -336,25 +298,6 @@ def generate_message(n):
                 destinataire = random.randint(1, 100)
             contenu = fake.paragraph(nb_sentences=1)
             writer.writerow([i, expediteur, destinataire, contenu])
-
-# Table 'Notification'
-def generate_notification(n):
-    with open(os.path.join(base_path, 'notification.csv'), mode='w', newline='') as file:
-
-        writer = csv.writer(file)
-        writer.writerow(["id", "notificationType", "vue", "dateEnvoie", "publication", "expéditeur", "destinataire"])
-        types = ['AjoutPublication', 'Suivi']
-        for i in range(1, n+1):
-            notificationType = random.choice(types)
-            vue = random.choice([True, False])
-            dateEnvoie = fake.date_this_year().isoformat()
-            publication = random.randint(1, 100) if notificationType == 'AjoutPublication' else None
-            expediteur = random.randint(1, 100)
-            destinataire = random.randint(1, 100)
-            writer.writerow([i, notificationType, vue, dateEnvoie, publication, expediteur, destinataire])
-
-
-
 
 # Table 'Amis'
 def generate_amis(n):
@@ -371,8 +314,6 @@ def generate_amis(n):
                     amis_set.add((user1, user2))
     except Exception as e:
         print(f"An error occurred while writing amis.csv: {e}")
-
-
 
 # Table 'Filme_Publication'
 def generate_filme_publication(n):
@@ -400,7 +341,6 @@ def generate_mots_cles_publication(n, max_publi_id, max_mot_cle_id):
             if (publiId, motCleId) not in unique_pairs:
                 writer.writerow([publiId, motCleId])
                 unique_pairs.add((publiId, motCleId))
-
 
 def generate_genre_cinemato(n):
     with open(os.path.join(base_path, 'genre_cinemato.csv'), mode='w', newline='') as file:
@@ -498,23 +438,6 @@ def generate_historique_publication2(n, max_user_id, max_publi_id):
 
             writer.writerow([idUser, idPubli, action, dateAction])
 
-# def generate_historique_publication(n, max_user_id, max_publi_id, max_reaction_id):
-#     path = os.path.join(base_path, 'historique_publication.csv')
-#     with open(path, mode='w', newline='') as file:
-#         writer = csv.writer(file)
-#         writer.writerow(["userId", "publiId", "action", "dateAction", "idReaction"])
-        
-#         actions = ["ajouter", "voir", "repondre à une publication"]  # Définir les types d'actions possibles
-
-#         for _ in range(n):
-#             userId = random.randint(1, max_user_id)  # Choix d'un userId existant
-#             publiId = random.randint(1, max_publi_id)  # Choix d'un publiId existant
-#             action = random.choice(actions)  # Sélection aléatoire d'une action
-#             dateAction = fake.date_between(start_date="-2y", end_date="today").isoformat()  # Génération d'une date d'action
-#             idReaction = random.randint(1, max_reaction_id) if action != "ajouter" else None  # Assumer une réaction si l'action n'est pas "ajouter"
-
-#             # Vérifier si l'id de réaction est requis pour toutes les actions; si non, ajuster la condition ci-dessus
-#             writer.writerow([userId, publiId, action, dateAction, idReaction])
             
 def generate_historique_and_reactions2(histo_count, reaction_count, max_user_id, max_publi_id):
     historique_path = 'historique_publication.csv'
@@ -714,14 +637,10 @@ generate_film_genre(100, 50, 24)  # Supposons que vous voulez 75 associations fi
 generate_serie_genre(100, 100, 24)  # 100 associations série-genre
 
 generate_archive(30)        
-generate_commentaire(100)
 
 # generate_reactions(600, 100)  # Générer 200 réactions pour 100 publications
 generate_historique_and_reactions(1800,1900,300,100)
 generate_message(50)             
-# generate_notification(80) 
-
-generate_roles()
 generate_amis(100)
 generate_follows(100)
 generate_filme_publication(100)

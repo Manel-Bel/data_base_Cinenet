@@ -6,7 +6,7 @@ WHERE u.id IN (
     SELECT a.user2
     FROM Amis a
     WHERE a.user2 = 
-        (SELECT DISTINCT id FROM Users WHERE username = 'paul06' AND role = 'Realisateur')
+        (SELECT DISTINCT id FROM Users WHERE username = 'william70' AND role = 'Realisateur')
     )
     AND u.id IN (
         SELECT folower 
@@ -14,7 +14,7 @@ WHERE u.id IN (
         WHERE id = 
             ( SELECT id 
             FROM Users
-            WHERE username = 'Mappa' AND role = 'Studio')
+            WHERE username = 'mark69' AND role = 'Studio')
             )
 ;
 
@@ -33,7 +33,7 @@ WHERE NOT EXISTS
     WHERE e.organisateur = 
         ( SELECT id 
         FROM Users
-        WHERE username = 'Japan Expo')
+        WHERE username = 'philipcole')
         AND NOT EXISTS 
         ( SELECT *
         FROM ParticipationEvent pe 
@@ -159,12 +159,12 @@ WHERE NOT EXISTS (
     FROM ParticipationEvent pe_hbo
     JOIN EventParticulier e_hbo ON pe_hbo.eventId = e_hbo.id
     WHERE pe_hbo.userId = u.id
-    AND e_hbo.organisateur = 'HBO'
+    AND e_hbo.organisateur = 110
 )
 AND NOT EXISTS (
     SELECT *
     FROM EventParticulier e_netflix
-    WHERE e_netflix.organisateur = 'Netflix'
+    WHERE e_netflix.organisateur = 7
     AND NOT EXISTS (
         SELECT *
         FROM ParticipationEvent pe_netflix
@@ -178,18 +178,18 @@ SELECT u.id, u.username
 FROM Users u
 JOIN ParticipationEvent pe_netflix ON u.id = pe_netflix.id
 JOIN EventParticulier e_netflix ON pe_netflix.eventId = e_netflix.eventId
-WHERE e_netflix.organisateur = 'Netflix'
+WHERE e_netflix.organisateur = 7
 GROUP BY u.id, u.username
 HAVING COUNT(pe_netflix.eventId) = (
     SELECT COUNT(e_netflix_inner.eventId)
     FROM EventParticulier e_netflix_inner
-    WHERE e_netflix_inner.nom = 'Netflix'
+    WHERE e_netflix_inner.nom = 7
 )
 AND u.id NOT IN (
     SELECT pe_hbo.id
     FROM ParticipationEvent pe_hbo
     JOIN EventParticulier e_hbo ON pe_hbo.id_evenement = e_hbo.id_evenement
-    WHERE s_hbo.organisateur = 'HBO'
+    WHERE s_hbo.organisateur = 110
 );
 
 
