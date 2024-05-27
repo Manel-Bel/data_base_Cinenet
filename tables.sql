@@ -240,16 +240,17 @@ CREATE TABLE HistoriquePublication(
     FOREIGN KEY (publiId) REFERENCES Publication(id) ON DELETE CASCADE
 );
 
--- CREATE TABLE HistoriqueReaction(
---     idUser INTEGER,
---     idPubli INTEGER,
---     idReaction INTEGER REFERENCES Reaction(id),
---     dateAction DATE NOT NULL,
---     PRIMARY KEY(idUser, idPubli, idReaction, dateAction),
---         -- On ne peut pas avoir deux fois la même réaction sur la même publication d'un même utilisateur dans le temps
---     FOREIGN KEY(idUser) REFERENCES Users(id) ON UPDATE CASCADE,
---     FOREIGN KEY(idPubli) REFERENCES Publication(id) ON UPDATE CASCADE,
---     FOREIGN KEY(idReaction) REFERENCES Reaction(id)
--- );
+CREATE VIEW UserFellowersView AS
+    SELECT u.id as id_user, u.username as name_user, uf.id as follower_id, uf.username as follower_name
+    FROM Follower f
+    JOIN Users u ON f.id = u.id
+    JOIN Users uf ON uf.id = f.folower
+;
+
+CREATE VIEW EventParticulierNonNull AS
+    SELECT *
+    FROM EventParticulier
+    WHERE nbPlaceDispo IS NOT NULL
+;
 
 

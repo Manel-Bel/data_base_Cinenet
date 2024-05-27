@@ -1,3 +1,11 @@
+SELECT id, titre,realisation FROM Film limit 10;
+SELECT id, auteur, titre, categorie from Discussion limit 5;
+SELECT id, auteur, titre, parentId FROM Publication LIMIT 5;
+select id, nomEvent, dateEvent, organisateur from EventParticulier limit 25;
+select * from ParticipationEvent;
+
+
+
 -- une requête qui porte sur au moins trois tables
 -- quels sont tous les amis du realisateur "paul06" qui suivent le STUDIO MAPPA
 SELECT u.id, u.username
