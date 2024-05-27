@@ -9,13 +9,11 @@
  \copy Film(id,titre, resume, realisation, duree) FROM 'CSV/films.csv' WITH (FORMAT csv, HEADER true);
 
 
--- -- remplire la table FilmGenre
  \copy FilmGenre(filmId, genreId) FROM 'CSV/film_genre.csv' WITH (FORMAT csv, HEADER true);
 
 
  \copy Serie(id,saison, titre, nbreEpisodes, dureeParEpisode, datePremiere) FROM 'CSV/series.csv' WITH (FORMAT csv, HEADER true);
 
--- -- remplire la table FilmGenre
  \copy serieGenre(serieId, genre) FROM 'CSV/serie_genre.csv' WITH (FORMAT csv, HEADER true);
 
 
@@ -23,10 +21,6 @@
 
 \copy CategorieDiscussion(id, categorie) FROM 'CSV/categorie_discussion.csv' WITH (FORMAT csv, HEADER true);
 
- -- \copy SujetPublication(id, description) FROM 'CSV/sujet_publication.csv' WITH (FORMAT csv, HEADER true);
-
--- -- pourqui tu ajoute id c'est un serial auto increment
--- -- plus de nb reserver
  \copy EventParticulier(id, auteur, nomEvent, dateEvent, lieuEvent, nbPlaceDispo, nbPlaceReserve, organisateur, liens_web) FROM 'CSV/EventParticulier.csv' WITH (FORMAT csv, HEADER true);
 
 \copy InteresseEvent(userId, eventId) FROM 'CSV/InteresseEvent.csv' WITH (FORMAT csv, HEADER true);

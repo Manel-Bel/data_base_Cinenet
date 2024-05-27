@@ -1,21 +1,21 @@
 -- Algorithme de recommendation
 
--- 1 Calculer le Nombre de Réactions Positives par Publication
-WITH PositiveReactions AS ( --dayen
+-- 1 Calculer le Nombre de Réactions Positives par Publication  // premier indice
+WITH PositiveReactions AS ( 
     SELECT R.publiId,
-        COUNT(*) AS nb_positive_reaction
+        COUNT(*) AS TotalPositiveReactions
     FROM Reaction R
     WHERE R.typer IN ('Like', 'Fun', 'Love')
     AND NOT EXISTS (
         SELECT 1
         FROM HistoriquePublication hp
-        WHERE hp.publiId = R.publiId AND hp.userId = [CurrentUserId] 
+        WHERE hp.publiId = R.publiId AND hp.userId = 208 
         )
     GROUP BY R.publiId
-);
+),
 
--- 2 le max de personnes ( interessé et qui participe )
-WITH EventInterestParticipation AS (
+-- 2 le max de personnes ( interessé et qui participe ) // deuxieme indice
+EventInterestParticipation AS (
     SELECT
         PEP.publiId,
         COALESCE(COUNT(DISTINCT IE.userId), 0) + COALESCE(COUNT(DISTINCT PE.userId), 0) AS TotalInterestParticipation
@@ -28,13 +28,13 @@ WITH EventInterestParticipation AS (
     LEFT JOIN
         ParticipationEvent PE ON E.id = PE.eventId
     GROUP BY PEP.publiId
-);
+),
 
 
--- 3 Troisieme indice :
+--  // Troisieme indice :
 
 -- Étape 1 : Filtrer l'historique des publications de l'utilisateur
-WITH UserHistory AS (
+ UserHistory AS (
     SELECT hp.publiId
     FROM HistoriquePublication hp
     WHERE
@@ -94,7 +94,7 @@ RecommendedPublications AS (
     SELECT
         P.id AS PublicationID,
         P.titre AS PublicationTitle,
-        G.nom AS GenreName
+        G.name AS GenreName
     FROM
         Publication P
     LEFT JOIN
@@ -102,29 +102,23 @@ RecommendedPublications AS (
     LEFT JOIN
         Film F ON PF.FilmId = F.id
     LEFT JOIN
+        FilmGenre FG ON F.id = FG.filmId
+    LEFT JOIN
         PublicationSerie PS ON P.id = PS.publiId
     LEFT JOIN
         Serie S ON PS.SerieId = S.id
     LEFT JOIN
-        GenreCinemato G ON (F.genre = G.id OR S.genre = G.id)
+        SerieGenre SG ON S.id = SG.serieId
+    LEFT JOIN
+        GenreCinemato G ON G.id = FG.genreId OR G.id = SG.genre
     WHERE
-        G.nom IN (SELECT GenreName FROM UserLikedGenres)
+        G.name IN (SELECT GenreName FROM UserLikedGenres)
         AND NOT EXISTS (
             SELECT 1
             FROM HistoriquePublication HP
-            WHERE HP.idPubli = P.id AND HP.userId = 208
+            WHERE HP.publiId = P.id AND HP.userId = 208
         )
 )
---juste un plus pour ce troisieme indice 
--- SELECT
---     PublicationID,
---     PublicationTitle,
---     GenreName
--- FROM
---     RecommendedPublications
--- ORDER BY
---     GenreName, PublicationTitle
--- LIMIT 10;
 
 
 -- Combinaison des indices
@@ -144,7 +138,7 @@ SELECT
 FROM
     Publication P
 LEFT JOIN
-    PositiveReactions PR ON P.id = PR.idPubli
+    PositiveReactions PR ON P.id = PR.publiId
 LEFT JOIN
     EventInterestParticipation EIP ON P.id = EIP.publiId
 ORDER BY
