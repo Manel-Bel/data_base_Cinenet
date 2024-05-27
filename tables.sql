@@ -1,31 +1,32 @@
 -- CREATE DATABASE CineNet;
 \c cinenet;
 
--- DROP TABLE IF EXISTS Role;
--- DROP TABLE IF EXISTS Amis;
--- DROP TABLE IF EXISTS Follower;
--- DROP TABLE IF EXISTS Archive;
--- DROP TABLE IF EXISTS Film CASCADE;
--- DROP TABLE IF EXISTS FilmGenre;
--- DROP TABLE IF EXISTS Serie;
--- DROP TABLE IF EXISTS Reaction;
--- DROP TABLE IF EXISTS GenreCinemato CASCADE;
--- DROP TABLE IF EXISTS MotsClesPublication;
--- DROP TABLE if EXISTS MotsCles;
--- DROP TABLE IF EXISTS ParticipationEvent;
--- DROP TABLE IF EXISTS InteresseEvent;
--- DROP TABLE IF EXISTS HistoriquePublication;
--- DROP TABLE IF EXISTS HistoriqueReaction;
--- DROP TABLE IF EXISTS EventParticulier CASCADE;
--- DROP TABLE IF EXISTS Publication CASCADE;
--- DROP TABLE IF EXISTS SujetPublication;
--- DROP TABLE IF EXISTS Discussion;
--- DROP TABLE IF EXISTS CategorieDiscussion;
--- DROP TABLE IF EXISTS Message;
--- DROP TABLE IF EXISTS Users CASCADE;
--- 
--- DROP TYPE IF EXISTS TypeRole CASCADE;
--- DROP TYPE IF EXISTS TypeReaction CASCADE;
+DROP TABLE IF EXISTS Role;
+DROP TABLE IF EXISTS Amis;
+DROP TABLE IF EXISTS Follower;
+DROP TABLE IF EXISTS Archive;
+DROP TABLE IF EXISTS Film CASCADE;
+DROP TABLE IF EXISTS FilmGenre;
+DROP TABLE IF EXISTS Serie;
+DROP TABLE IF EXISTS SerieGenre;
+DROP TABLE IF EXISTS Reaction;
+DROP TABLE IF EXISTS GenreCinemato CASCADE;
+DROP TABLE IF EXISTS MotsClesPublication;
+DROP TABLE if EXISTS MotsCles;
+DROP TABLE IF EXISTS ParticipationEvent;
+DROP TABLE IF EXISTS InteresseEvent;
+DROP TABLE IF EXISTS HistoriquePublication;
+DROP TABLE IF EXISTS HistoriqueReaction;
+DROP TABLE IF EXISTS EventParticulier CASCADE;
+DROP TABLE IF EXISTS Publication CASCADE;
+DROP TABLE IF EXISTS SujetPublication;
+DROP TABLE IF EXISTS Discussion;
+DROP TABLE IF EXISTS CategorieDiscussion;
+DROP TABLE IF EXISTS Message;
+DROP TABLE IF EXISTS Users CASCADE;
+
+DROP TYPE IF EXISTS TypeRole CASCADE;
+DROP TYPE IF EXISTS TypeReaction CASCADE;
 
 -- CHANGEMENT
 CREATE TYPE TypeRole as ENUM ('lamda', 'Realisateur', 'acteur', 'organisateurSalle', 'Cinema' ,'Club', 'Studio', 'organisateurEvent');

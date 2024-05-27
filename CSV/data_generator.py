@@ -7,7 +7,7 @@ fake = Faker()
 # Chemin de base pour tous les fichiers CSV
 base_path = os.path.dirname(os.path.abspath(__file__))
 
-def generate_users(n):
+def generate_users2(n):
     try:
         with open(os.path.join(base_path, 'Utilisateurs.csv'), mode='w', newline='') as file:
 
@@ -28,24 +28,49 @@ def generate_users(n):
     except Exception as e:
         print(f"An error occurred while writing Utilisateurs.csv: {e}")
 
+def generate_users(n):
+    path = os.path.join(os.getcwd(), 'Utilisateurs.csv')  # Utilise le répertoire de travail courant
+    try:
+        with open(path, mode='w', newline='') as file:
+            writer = csv.writer(file)
+            writer.writerow(["username", "password", "email", "role"])
+            existing_emails = set()
+            existing_usernames = set()  # Pour assurer l'unicité des noms d'utilisateur
+            roles = ['lamda', 'Realisateur', 'acteur', 'organisateurSalle', 'Cinema', 'Club', 'Studio', 'organisateurEvent']
+            
+            while len(existing_emails) < n:
+                email = fake.email()
+                if email not in existing_emails:
+                    username = fake.user_name()
+                    # Assurer que le nom d'utilisateur est unique
+                    while username in existing_usernames:
+                        username = fake.user_name()
+                    
+                    password = fake.password(length=12)
+                    role = random.choice(roles)
+                    writer.writerow([username, password, email, role])
+                    existing_emails.add(email)
+                    existing_usernames.add(username)  # Ajouter le nom d'utilisateur à l'ensemble
+    except Exception as e:
+        print(f"An error occurred while writing Utilisateurs.csv: {e}")
+        
 def generate_films(n):
     with open(os.path.join(base_path, 'films.csv'), mode='w', newline='') as file:
         writer = csv.writer(file)
-        writer.writerow(["id", "titre", "resume", "realisation", "duree", "genre"])
+        writer.writerow(["id", "titre", "resume", "realisation", "duree"])
         for i in range(1, n+1):  # Utiliser i pour générer un ID unique pour chaque film
             titre = fake.sentence(nb_words=5)
             resume = fake.text(max_nb_chars=200)
             realisation = fake.date_this_century().isoformat()
             duree = random.randint(60, 180)
-            genre = fake.word()  # Supposons que le genre correspond au nom d'un genre déjà existant
-            writer.writerow([i, titre, resume, realisation, duree, genre])
+            writer.writerow([i, titre, resume, realisation, duree])
 
 
 def generate_publications(n):
     path = os.path.join(base_path, 'publications.csv')
     with open(path, mode='w', newline='') as file:
         writer = csv.writer(file)
-        writer.writerow(["id", "auteur", "discussionId", "titre", "contenu", "sujetId", "parentId"])
+        writer.writerow(["id", "auteur", "discussionId", "titre", "contenu", "datePublication", "parentId"])
         
         # Les parentId valides commencent à 1 et vont jusqu'à n, mais on utilise une publication comme parent pour les suivantes
         for i in range(1, n+1):
@@ -53,8 +78,7 @@ def generate_publications(n):
             discussionId = random.randint(1, 50)  # Supposer que nous avons 50 discussions max
             titre = fake.sentence()
             contenu = fake.text()
-            sujetId = random.randint(1, 10)  # Supposer que nous avons 10 sujets max
-           # datePublication = fake.date_time_between(start_date="-1y", end_date="now").isoformat()
+            datePublication = fake.date_time_between(start_date="-1y", end_date="now").isoformat()
             
             # Chaque publication a un parentId, qui est un ID existant d'une publication précédente, sauf la première
             if i == 1:
@@ -62,7 +86,7 @@ def generate_publications(n):
             else:
                 parentId = random.randint(1, i-1)  # Assurer que le parentId est toujours un ID existant
                 
-            writer.writerow([i, auteur, discussionId, titre, contenu, sujetId, parentId])
+            writer.writerow([i, auteur, discussionId, titre, contenu, datePublication, parentId])
 
 
 
@@ -103,10 +127,10 @@ def generate_follows(n):
 
 
 # Table 'Serie'
-def generate_series(n, max_genre_id):
+def generate_series2(n, max_genre_id):
     with open(os.path.join(base_path, 'series.csv'), mode='w', newline='') as file:
         writer = csv.writer(file)
-        writer.writerow(["id", "saison", "titre", "nbreEpisodes", "dureeParEpisode", "datePremiere", "genre"])
+        writer.writerow(["id", "saison", "titre", "nbreEpisodes", "dureeParEpisode", "datePremiere"])
         used_ids = set()  # Ensemble pour suivre les ID utilisés
         while len(used_ids) < n:
             id = random.randint(1, 200)  # Élargir la plage pour réduire les collisions
@@ -117,10 +141,22 @@ def generate_series(n, max_genre_id):
             nbreEpisodes = random.randint(8, 24)
             dureeParEpisode = random.randint(20, 60)
             datePremiere = fake.date_this_decade().isoformat()
-            genre = random.randint(1, max_genre_id)
-            writer.writerow([id, saison, titre, nbreEpisodes, dureeParEpisode, datePremiere, genre])
+            writer.writerow([id, saison, titre, nbreEpisodes, dureeParEpisode, datePremiere])
             used_ids.add(id)  # Ajouter l'ID à l'ensemble des ID utilisés
 
+def generate_series(n, max_genre_id):
+    path = os.path.join(base_path, 'series.csv')  # Conserve le chemin original basé sur base_path
+    with open(path, mode='w', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerow(["id", "saison", "titre", "nbreEpisodes", "dureeParEpisode", "datePremiere"])
+        
+        for i in range(1, n + 1):  # Génération séquentielle des IDs de 1 à n
+            saison = random.randint(1, 5)
+            titre = fake.sentence(nb_words=4)
+            nbreEpisodes = random.randint(8, 24)
+            dureeParEpisode = random.randint(20, 60)
+            datePremiere = fake.date_this_decade().isoformat()
+            writer.writerow([i, saison, titre, nbreEpisodes, dureeParEpisode, datePremiere])
 
 def generate_events(n):
     with open(os.path.join(base_path, 'events.csv'), mode='w', newline='') as file:
@@ -161,7 +197,7 @@ def generate_mots_cles(n):
 def generate_categorie_discussion(n):
     with open(os.path.join(base_path, 'categorie_discussion.csv'), mode='w', newline='') as file:
         writer = csv.writer(file)
-        writer.writerow(["idCategorie", "nomCategorie"])
+        writer.writerow(["idCategorie", "categorie"])
         categories = set()  # Use a set to avoid duplicate categories
         while len(categories) < n:
             categorie = fake.word()
@@ -173,7 +209,7 @@ def generate_categorie_discussion(n):
 def generate_discussions(n):
     with open(os.path.join(base_path, 'discussions.csv'), mode='w', newline='') as file:
         writer = csv.writer(file)
-        writer.writerow(["idDiscussion", "idCreateur", "titreDiscussion", "description", "idCategorie"])
+        writer.writerow(["id", "auteur", "titre", "description", "categorieId"])
         for i in range(1, n+1):
             idCreateur = random.randint(1, 100)  # Assuming 100 users
             titreDiscussion = fake.sentence(nb_words=5)
@@ -208,12 +244,12 @@ def generate_participation_event(n, max_event_id):
 def generate_archive(n):
     with open(os.path.join(base_path, 'archive.csv'), mode='w', newline='') as file:
         writer = csv.writer(file)
-        writer.writerow(["idArchive", "dateArchivage", "raison", "publication"])
+        writer.writerow(["idArchive", "dateArchivage", "raison", "eventId"])
         for i in range(1, n+1):
             dateArchivage = fake.date_this_year().isoformat()
             raison = fake.sentence(nb_words=5)
-            publication = random.randint(1, 100)  # Assuming 100 publications
-            writer.writerow([i, dateArchivage, raison, publication])
+            eventId = random.randint(1, 100)  # Assuming 100 publications
+            writer.writerow([i, dateArchivage, raison, eventId])
 
 # Table 'Commentaire'
 def generate_commentaire(n):
@@ -230,7 +266,7 @@ def generate_commentaire(n):
 # Table 'Reaction'
 
 
-def generate_reactions(n, max_pub_id):
+def generate_reactions2(n, max_pub_id):
     path = os.path.join(base_path, 'reactions.csv')
     with open(path, mode='w', newline='') as file:
         writer = csv.writer(file)
@@ -249,10 +285,26 @@ def generate_reactions(n, max_pub_id):
                 writer.writerow([idPubli, idUser, type])
                 used_pairs.add(pair)
 
+def generate_reactions(n, max_pub_id):
+    path = os.path.join(base_path, 'reactions.csv')
+    with open(path, mode='w', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerow(["id", "publiId", "userId", "type"])  # Ajout de la colonne 'id'
+        types = ['Like', 'Dislike', 'Neutre', 'Fun', 'Sad', 'Angry', 'Love']  # Assurez-vous que cela inclut tous les types possibles
+        valid_pub_ids = set(range(1, max_pub_id + 1))  # Assurez-vous que max_pub_id est le maximum réel dans 'publication'
+        used_pairs = set()
+        id_counter = 1  # Compteur pour les ID, commence à 1
 
+        while len(used_pairs) < n:
+            publiId = random.choice(list(valid_pub_ids))
+            userId = random.randint(1, 100)  # Supposer 100 utilisateurs max
+            pair = (publiId, userId)
 
-
-
+            if pair not in used_pairs:
+                reaction_type = random.choice(types)
+                writer.writerow([id_counter, publiId, userId, reaction_type])  # Ajout de l'ID à la ligne
+                used_pairs.add(pair)
+                id_counter += 1  # Incrémenter l'ID pour chaque nouvelle entrée
 
 
 
@@ -338,7 +390,7 @@ def generate_mots_cles_publication(n, max_publi_id, max_mot_cle_id):
 def generate_genre_cinemato(n):
     with open(os.path.join(base_path, 'genre_cinemato.csv'), mode='w', newline='') as file:
         writer = csv.writer(file)
-        writer.writerow(["id", "nom", "parentId"])
+        writer.writerow(["id", "nom", "parent"])
         
         # Example genres for illustration
         base_genres = ['Action', 'Comedy', 'Drama', 'Fantasy', 'Horror', 'Science Fiction']
@@ -363,6 +415,7 @@ def generate_genre_cinemato(n):
             for sub in sub_list:
                 writer.writerow([current_id, sub, parent_id])
                 current_id += 1
+
 def generate_event_particulier(n):
     with open(os.path.join(base_path, 'EventParticulier.csv'), mode='w', newline='') as file:
         writer = csv.writer(file)
@@ -399,10 +452,10 @@ def generate_interesse_event(n, max_user_id, max_event_id):
                 writer.writerow([userId, eventId])
                 unique_pairs.add((userId, eventId))
 
-def generate_historique_publication(n, max_user_id, max_publi_id):
+def generate_historique_publication2(n, max_user_id, max_publi_id):
     with open(os.path.join(base_path, 'historique_publication.csv'), mode='w', newline='') as file:
         writer = csv.writer(file)
-        writer.writerow(["idUser", "idPubli", "action", "dateAction"])
+        writer.writerow(["userId", "publiId", "action", "dateAction"])
         
         actions = ["ajouter", "voir", "repondre à une publication"]  # Définir les types d'actions possibles
 
@@ -414,16 +467,69 @@ def generate_historique_publication(n, max_user_id, max_publi_id):
 
             writer.writerow([idUser, idPubli, action, dateAction])
 
+def generate_historique_publication(n, max_user_id, max_publi_id, max_reaction_id):
+    path = os.path.join(base_path, 'historique_publication.csv')
+    with open(path, mode='w', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerow(["userId", "publiId", "action", "dateAction", "idReaction"])
+        
+        actions = ["ajouter", "voir", "repondre à une publication"]  # Définir les types d'actions possibles
+
+        for _ in range(n):
+            userId = random.randint(1, max_user_id)  # Choix d'un userId existant
+            publiId = random.randint(1, max_publi_id)  # Choix d'un publiId existant
+            action = random.choice(actions)  # Sélection aléatoire d'une action
+            dateAction = fake.date_between(start_date="-2y", end_date="today").isoformat()  # Génération d'une date d'action
+            idReaction = random.randint(1, max_reaction_id) if action != "ajouter" else None  # Assumer une réaction si l'action n'est pas "ajouter"
+
+            # Vérifier si l'id de réaction est requis pour toutes les actions; si non, ajuster la condition ci-dessus
+            writer.writerow([userId, publiId, action, dateAction, idReaction])
+
+def generate_film_genre(n, max_film_id, max_genre_id):
+    path = os.path.join(base_path, 'film_genre.csv')
+    with open(path, mode='w', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerow(["filmId", "genreId"])
+        unique_pairs = set()  # Pour éviter les doublons
+
+        while len(unique_pairs) < n:
+            filmId = random.randint(1, max_film_id)
+            genreId = random.randint(1, max_genre_id)
+
+            if (filmId, genreId) not in unique_pairs:
+                writer.writerow([filmId, genreId])
+                unique_pairs.add((filmId, genreId))
+
+def generate_serie_genre(n, max_serie_id, max_genre_id):
+    path = os.path.join(base_path, 'serie_genre.csv')
+    with open(path, mode='w', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerow(["serieId", "genre"])
+        unique_pairs = set()  # Pour garantir l'unicité des associations
+
+        while len(unique_pairs) < n:
+            serieId = random.randint(1, max_serie_id)
+            genreId = random.randint(1, max_genre_id)
+
+            if (serieId, genreId) not in unique_pairs:
+                writer.writerow([serieId, genreId])
+                unique_pairs.add((serieId, genreId))
+
+
 # activation de ses fonctions
 generate_genre_cinemato(24)  # Générer des genres cinématographiques, en assurant qu'il y en a assez pour les références
 
 generate_users(100) 
-generate_films(50)  
+generate_films(100)  
+generate_series(100, 24)  # Générer 100 séries en s'assurant que les genres existent
 generate_publications(100)  
 generate_sujet_publication(10) 
 generate_mots_cles(30)         
 generate_categorie_discussion(10)  # Générer 10 catégories de discussion uniques
 generate_discussions(50)    
+
+generate_film_genre(100, 50, 24)  # Supposons que vous voulez 75 associations film-genre
+generate_serie_genre(100, 100, 24)  # 100 associations série-genre
 
 generate_participation_event(50, 20)  # Générer 50 participations à des événements, avec un maximum de 20 événements différents
 generate_archive(30)        
@@ -431,7 +537,7 @@ generate_commentaire(100)
 
 generate_reactions(200, 100)  # Générer 200 réactions pour 100 publications
 
-# generate_message(150)             
+generate_message(50)             
 # generate_notification(80) 
 
 generate_roles()
@@ -440,10 +546,9 @@ generate_follows(100)
 generate_filme_publication(100)
 generate_mots_cles_publication(100, 100, 30)  # Supposons que vous ayez 100 publications et 30 mots clés
 
-generate_series(100, 24)  # Générer 100 séries en s'assurant que les genres existent
 generate_event_particulier(100)  # Generate 50 particular events
 generate_interesse_event(200, 100, 50)  # Generate 200 entries with up to 100 users and 50 events
-generate_historique_publication(100, 100, 50)  # Générer 100 entrées historiques avec jusqu'à 100 utilisateurs et 50 publications
+generate_historique_publication(100, 100, 50, 200)
 
 
 

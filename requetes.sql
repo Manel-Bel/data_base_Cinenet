@@ -311,9 +311,6 @@ JOIN  Users u ON ca.ami = u.id
 ORDER BY ca.niveau, ca.ami;
 
 
-
-
-
 --Requete avec fenetrage 
 --La requête vise à identifier les 10 événements les plus populaires, organisés par des utilisateurs ayant le rôle 'acteur'
 --, pour chaque mois de l'année 2025. La popularité est déterminée par le nombre de participants à chaque événement.

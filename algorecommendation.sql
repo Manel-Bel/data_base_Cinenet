@@ -1,7 +1,7 @@
 -- Algorithme de recommendation
 
 -- 1 Calculer le Nombre de Réactions Positives par Publication
-WITH PositiveReactions AS (
+WITH PositiveReactions AS ( --dayen
     SELECT R.publiId,
         COUNT(*) AS nb_positive_reaction
     FROM Reaction R
@@ -9,8 +9,7 @@ WITH PositiveReactions AS (
     AND NOT EXISTS (
         SELECT 1
         FROM HistoriquePublication hp
-        WHERE hp.publiId = R.publiId AND hp.idUser = [CurrentUserId] 
-        -- a remplacer 
+        WHERE hp.publiId = R.publiId AND hp.userId = [CurrentUserId] 
         )
     GROUP BY R.publiId
 );
@@ -39,7 +38,7 @@ WITH UserHistory AS (
     SELECT hp.publiId
     FROM HistoriquePublication hp
     WHERE
-        hp.userId = [CurrentUserId] -- Remplacez par l'ID de l'utilisateur actuel
+        hp.userId = [CurrentUserId] 
 ),
 
 
@@ -50,7 +49,7 @@ UserLikedPublications AS (
     FROM
         Reaction R
     WHERE
-        R.userId = [CurrentUserId] -- ID de l'utilisateur actuel
+        R.userId = [CurrentUserId] -- id de l'utilisateur actuel
         AND R.type IN ('Like', 'Fun', 'Love')
         AND EXISTS (
             SELECT 1
@@ -78,23 +77,23 @@ UserLikedFilmsSeries AS (
 
 -- Étape 4 : Identifier les genres des films et séries
 UserLikedGenres AS (
-    SELECT
-        G.nom AS GenreName
+    SELECT DISTINCT
+        G.name AS GenreName
     FROM
         UserLikedFilmsSeries ULFS
     JOIN
-        Film F ON ULFS.ItemId = F.id AND ULFS.ItemType = 'Film'
+        FilmGenre FG ON ULFS.ItemId = FG.filmId AND ULFS.ItemType = 'Film'
     JOIN
-        GenreCinemato G ON F.genre = G.id
+        GenreCinemato G ON FG.genreId = G.id
     UNION
-    SELECT
-        G.nom AS GenreName
+    SELECT DISTINCT
+        G.name AS GenreName
     FROM
         UserLikedFilmsSeries ULFS
     JOIN
-        Serie S ON ULFS.ItemId = S.id AND ULFS.ItemType = 'Serie'
+        SerieGenre SG ON ULFS.ItemId = SG.serieId AND ULFS.ItemType = 'Serie'
     JOIN
-        GenreCinemato G ON S.genre = G.id
+        GenreCinemato G ON SG.genre = G.id
 ),
 
 -- Étape 5 : Proposer des publications de films et séries du même genre
@@ -120,19 +119,19 @@ RecommendedPublications AS (
         AND NOT EXISTS (
             SELECT 1
             FROM HistoriquePublication HP
-            WHERE HP.idPubli = P.id AND HP.idUser = [CurrentUserId]
+            WHERE HP.idPubli = P.id AND HP.userId = [CurrentUserId]
         )
 )
 --juste un plus pour ce troisieme indice 
-SELECT
-    PublicationID,
-    PublicationTitle,
-    GenreName
-FROM
-    RecommendedPublications
-ORDER BY
-    GenreName, PublicationTitle
-LIMIT 10;
+-- SELECT
+--     PublicationID,
+--     PublicationTitle,
+--     GenreName
+-- FROM
+--     RecommendedPublications
+-- ORDER BY
+--     GenreName, PublicationTitle
+-- LIMIT 10;
 
 
 -- Combinaison des indices
