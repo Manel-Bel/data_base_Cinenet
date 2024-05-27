@@ -23,3 +23,13 @@ Commandes:
     - Contient les requêtes paramétrées de recherche préparées
   - script.sql :
     - Contient les requêtes pour la saisie du prompt et l'exécution de chaque requête paramétrée
+
+
+-pour cree les tables : \i tables.sql
+-pour peupler les tables : \i peuplement.sql
+-les requetes demandées sont dans requetes.sql
+-ceux avec recherche dans requete_para.sql et script.sql
+-Algorithme de recommendation : \i algorecommendation.sql
+-SchemaER represente le schema ER de notre base de données
+-data_generator.py est un fichier python qui contient des fonctions qui cree les fichiers CSV -- peuplement des tables (puisque les fichiers sont deja remplis il est inutile d'executer ce fichier)
+

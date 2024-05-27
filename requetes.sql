@@ -6,7 +6,7 @@ select * from ParticipationEvent;
 
 
 
--- une requête qui porte sur au moins trois tables
+-- 1/une requête qui porte sur au moins trois tables
 -- quels sont tous les amis du realisateur "paul06" qui suivent le STUDIO MAPPA
 SELECT u.id, u.username
 FROM Users u 
@@ -23,15 +23,13 @@ WHERE u.id IN (
             ( SELECT id 
             FROM Users
             WHERE username = 'mark69' AND role = 'Studio')
-            )
-;
+            );
 
 
--- auto jointure pour recuperer les sous genre du genre action dont l'id est 1 :)))
-select G2.id, G2.nom from GenreCinemato G1 inner join GenreCinemato G2 on G1.id = G2.parentId where G1.id = 1 ;
+-- 2/ Auto jointure pour recuperer les sous genre du genre action dont l'id est 1 
+select G2.id, G2.name from GenreCinemato G1 inner join GenreCinemato G2 on G1.id = G2.parent where G1.id = 1 ;
 
-
--- — une sous-requête corrélée
+-- 3/ une sous-requête corrélée
 -- la liste des utilisateurs ayant participé à tous les evemements organisé par 'japan expo'
 SELECT u.id, u.username
 FROM Users u
@@ -51,8 +49,8 @@ WHERE NOT EXISTS
     )
 ;
 
-
--- sous requete dans le from 
+-- 4/ Sous requete dans le from
+-- recupere les publications de tous les utilisateurs dont leurs noms commence par j 
 SELECT u.username, p.titre
 FROM (
     SELECT id, username
@@ -62,9 +60,8 @@ FROM (
 INNER JOIN Publication p ON p.auteur = u.id;
 
 
--- une sous-requête dans le WHERE ; 
+-- 5/ Une sous-requête dans le WHERE ; 
 -- quels sont les films de genre 'Horror' et leurs sous genre ?
--- à CHANGER 
 SELECT f.id, f.titre
 FROM Film f JOIN FilmGenre fg  ON f.id = fg.filmId
 JOIN GenreCinemato g ON fg.genreId = g.id
@@ -75,16 +72,38 @@ WHERE g.name = 'Horror' OR
 GROUP BY f.id
 ORDER BY f.titre ;
 
+-- 6/ Une sous-requête dans le WHERE ; 
+--Requête pour trouver les utilisateurs qui ont uniquement des amis réalisateurs
+SELECT u.id, u.username
+FROM Users u
+WHERE NOT EXISTS (
+    SELECT 1
+    FROM Amis a
+    JOIN Users u2 ON a.user2 = u2.id
+    WHERE a.user1 = u.id AND u2.role != 'Realisateur'
+);
+
+
+-- 7/ Une sous-requête dans le WHERE ; 
+--Requête pour sélectionner les discussions sans aucune publication 
+SELECT d.id, d.titre
+FROM Discussion d
+WHERE NOT EXISTS (
+    SELECT 1
+    FROM Publication p
+    WHERE p.discussionId = d.id
+);
 
 
 
+--8/ — deux agrégats nécessitant GROUP BY et HAVING ;
 --Compter le nombre de publications par utilisateur, mais seulement pour ceux ayant plus de 3 publications
 SELECT auteur, COUNT(*) AS nombre_publications
 FROM Publication
 GROUP BY auteur
-HAVING COUNT(*) > 3;
+HAVING COUNT(*) >= 3;
 
-
+--9/ — deux agrégats nécessitant GROUP BY et HAVING ;
 -- Calculer le nombre moyen d'épisodes par série pour chaque genre, en incluant seulement les genres avec plus de 2 séries
 SELECT g.name, ROUND(AVG(s.nbreEpisodes), 2) AS moyenne_episodes
 FROM Serie s
@@ -95,14 +114,15 @@ HAVING COUNT(DISTINCT s.id) > 2;
 
 
 
-
+--10/ — deux agrégats nécessitant GROUP BY et HAVING ;
 --Compter le nombre de réactions de chaque type pour les publications ayant reçu plus de 10 réactions en total
 
-SELECT publiId, type, COUNT(*) AS nombre_reactions
+SELECT publiId, typer, COUNT(*) AS nombre_reactions
 FROM Reaction
-GROUP BY publiId, type
+GROUP BY publiId, typer
 HAVING COUNT(*) > 3;
 
+--11/ — deux agrégats nécessitant GROUP BY et HAVING ;
 
 -- Identifier les événements avec un nombre de places disponibles inférieur à 10% du total initial
 SELECT id, nomEvent, (nbPlaceDispo - nbPlaceReserve) AS places_restantes
@@ -111,7 +131,7 @@ GROUP BY id
 HAVING (nbPlaceDispo - nbPlaceReserve) < (0.1 * nbPlaceDispo);
 
 
---  une requête impliquant le calcul de deux agrégats
+-- 12/  une requête impliquant le calcul de deux agrégats
 -- quel est la moyenne du nombre maximun de participant à un evenement pour chaque année
 SELECT year, ROUND(AVG(max_participants), 2) as moyenne_max_participants
 FROM(
@@ -126,13 +146,8 @@ ORDER BY year DESC
 ;
 
 
-
+-- 13/ une jointure externe (LEFT JOIN)
 --Utilisation d'un LEFT JOIN pour trouver tous les films et leur genre, même ceux sans genre spécifié
--- SELECT f.titre, g.nom
--- FROM GenreCinemato g
--- RIGHT JOIN Film f ON f.genre = g.nom
--- ORDER BY f.titre;
-
 SELECT f.titre, g.name AS genre
 FROM Film f
 LEFT JOIN FilmGenre fg ON f.id = fg.filmId
@@ -140,6 +155,7 @@ LEFT JOIN GenreCinemato g ON fg.genreId = g.id
 ORDER BY f.titre;
 
 
+-- 14/ une jointure externe (FULL JOIN))
 --Utilisation d'un FULL JOIN pour afficher tous les utilisateurs et tous les événements, montrant les correspondances et les non-correspondances
 SELECT u.username, e.nomEvent
 FROM Users u
@@ -148,8 +164,8 @@ FULL JOIN EventParticulier e ON pe.eventId = e.id
 ORDER BY u.username, e.nomEvent;
 
 
+-- 15/ une jointure externe (LEFT JOIN)
 --Utilisation d'un LEFT JOIN pour lister tous les événements et leur nombre de participants, y compris ceux sans participants
-
 SELECT e.nomEvent, COUNT(pe.userId) AS nombre_participants
 FROM EventParticulier e
 LEFT JOIN ParticipationEvent pe ON e.id = pe.eventId
@@ -157,54 +173,53 @@ GROUP BY e.nomEvent
 ORDER BY nombre_participants;
 
 
--- — deux requêtes équivalentes exprimant une condition de totalité, l’une avec des sous requêtes corrélées et l’autre avec de l’agrégation
-
--- Quels sont les utilisateurs ayant participé UNIQUEMENT à tous les événements organisés par un studio HBO et ne pas avoir participé au évènement de studio adverse NETFLIX ?
+-- 14/— deux requêtes équivalentes exprimant une condition de totalité, l’une avec des sous requêtes corrélées et l’autre avec de l’agrégation
+-- Quels sont les utilisateurs ayant participé à tous les événements organisés par un studio 7 et ne pas avoir participé au évènement de studio adverse 130 ?
 SELECT u.id, u.username
 FROM Users u
+-- Identifier les utilisateurs qui ont participé à tous les événements du studio 7
 WHERE NOT EXISTS (
-    SELECT *
-    FROM ParticipationEvent pe_hbo
-    JOIN EventParticulier e_hbo ON pe_hbo.eventId = e_hbo.id
-    WHERE pe_hbo.userId = u.id
-    AND e_hbo.organisateur = 110
-)
-AND NOT EXISTS (
-    SELECT *
-    FROM EventParticulier e_netflix
-    WHERE e_netflix.organisateur = 7
+    SELECT e.id FROM EventParticulier e
+    WHERE e.organisateur = 7
     AND NOT EXISTS (
-        SELECT *
-        FROM ParticipationEvent pe_netflix
-        WHERE pe_netflix.id = u.id
-        AND pe_netflix.eventId = e_netflix.id
+        SELECT pe.userId
+        FROM ParticipationEvent pe
+        WHERE pe.eventId = e.id
+        AND pe.userId = u.id
     )
+)
+-- Exclure les utilisateurs qui ont participé à des évent du studio 130
+AND NOT EXISTS (
+    SELECT pe.userId
+    FROM ParticipationEvent pe
+    JOIN EventParticulier e ON pe.eventId = e.id
+    WHERE e.organisateur = 130
+    AND pe.userId = u.id
 );
 
 
 SELECT u.id, u.username
 FROM Users u
-JOIN ParticipationEvent pe_netflix ON u.id = pe_netflix.id
-JOIN EventParticulier e_netflix ON pe_netflix.eventId = e_netflix.eventId
-WHERE e_netflix.organisateur = 7
+JOIN ParticipationEvent pe ON u.id = pe.userId
+JOIN EventParticulier e ON pe.eventId = e.id
+WHERE e.organisateur = 7
 GROUP BY u.id, u.username
-HAVING COUNT(pe_netflix.eventId) = (
-    SELECT COUNT(e_netflix_inner.eventId)
-    FROM EventParticulier e_netflix_inner
-    WHERE e_netflix_inner.nom = 7
+HAVING COUNT(DISTINCT e.id) = (
+    SELECT COUNT(DISTINCT e.id)
+    FROM EventParticulier e
+    WHERE e.organisateur = 7
 )
 AND u.id NOT IN (
-    SELECT pe_hbo.id
-    FROM ParticipationEvent pe_hbo
-    JOIN EventParticulier e_hbo ON pe_hbo.id_evenement = e_hbo.id_evenement
-    WHERE s_hbo.organisateur = 110
+    SELECT pe.userId
+    FROM ParticipationEvent pe
+    JOIN EventParticulier e ON pe.eventId = e.id
+    WHERE e.organisateur = 130
 );
 
 
 
 
---requete equivantes mais qui retourne de resultat deffirents a cause de valeur null :
-
+--17/requete equivantes mais qui retourne de resultat deffirents a cause de valeur null :
 -- Q1: Recherche d'événements avec le plus grand nombre de places disponibles sans aucun autre événement ayant plus de places, triés par nom d'événement.
 SELECT nomEvent
 FROM EventParticulier AS E1
@@ -225,7 +240,6 @@ WHERE nbPlaceDispo = (
 ORDER BY nomEvent DESC;
 
 --sur des donnee sans null 
-
 SELECT nomEvent
 FROM EventParticulierNonNull AS E1
 WHERE NOT EXISTS (
@@ -244,7 +258,6 @@ WHERE nbPlaceDispo = (
 ORDER BY nomEvent DESC;
 
 --correction de ses requetes avec utilisations de COALESCE
-
 SELECT nomEvent
 FROM EventParticulier AS E1
 WHERE NOT EXISTS (
@@ -265,35 +278,32 @@ ORDER BY nomEvent DESC;
 
 
 
--- Une requête récursive;
+--18/ Une requête récursive;
 -- niveau de chaque publication sur le forum
 WITH RECURSIVE publicationNiveau AS 
-    (SELECT id as id_publication , auteur, titre, parentId,
-        0 AS niveau 
+    (SELECT id as id_publication , auteur, titre, parentId, 0 AS niveau 
     FROM  Publication
     WHERE parentId IS NULL
 
     UNION ALL
-    -- Recursive case: 
-    SELECT  p.id AS id_publication, p.auteur, p.titre, p.parentId,
-        pn.niveau + 1 AS niveau
+
+    SELECT  p.id AS id_publication, p.auteur, p.titre, p.parentId, pn.niveau + 1 AS niveau
     FROM Publication p
     JOIN publicationNiveau pn 
     ON p.parentId = pn.id_publication
 )
-
 SELECT id_publication, auteur, titre, parentId, niveau
 FROM  publicationNiveau
 ORDER BY  niveau, id_publication;
 
 
--- chaine d'amitié de user 1 
+--19/ Une requête récursive;
+-- calcule de la profondeur d'un publication  (exemple publication 1)
 WITH RECURSIVE ChaineAmitie AS (
     SELECT  user1,  user2,  ARRAY[user1, user2] AS chemin
     FROM Amis
     WHERE user1 = 1
     UNION
-    
     SELECT ca.user1, a.user2, chemin || a.user2
     FROM Amis a
     JOIN ChaineAmitie ca ON a.user1 = ca.user2
@@ -309,10 +319,11 @@ FROM NomChaine
 ORDER BY array_length(chemin, 1) DESC
 LIMIT 1;
 
---Requete avec fenetrage 
+
+
+--20/ Requete avec fenetrage 
 --La requête vise à identifier les 10 événements les plus populaires, organisés par des utilisateurs ayant le rôle 'acteur'
 --, pour chaque mois de l'année 2025. La popularité est déterminée par le nombre de participants à chaque événement.
-
 WITH MonthlyEventOrganizers AS (
     SELECT
         E.id AS EventID,
