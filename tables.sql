@@ -34,7 +34,7 @@ CREATE TYPE TypeRole as ENUM ('lamda', 'Realisateur', 'acteur', 'organisateurSal
 -- CHANGEMENT USERNAME NOT UNIQUE BUT EMAIL MUST BE UNIQUE
 CREATE TABLE Users(
     id serial PRIMARY KEY,
-    username  VARCHAR(50) NOT NULL,
+    username  VARCHAR(50) NOT NULL UNIQUE,
     password  VARCHAR(128) NOT NULL,
     email  VARCHAR(75) UNIQUE,
     role TypeRole
