@@ -176,45 +176,46 @@ ORDER BY nombre_participants;
 
 
 -- 14/— deux requêtes équivalentes exprimant une condition de totalité, l’une avec des sous requêtes corrélées et l’autre avec de l’agrégation
--- Quels sont les utilisateurs ayant participé UNIQUEMENT à tous les événements organisés par un studio et ne pas avoir participé au évènement de studio adverse  ?
+-- Quels sont les utilisateurs ayant participé à tous les événements organisés par un studio 7 et ne pas avoir participé au évènement de studio adverse 130 ?
 SELECT u.id, u.username
 FROM Users u
+-- Identifier les utilisateurs qui ont participé à tous les événements du studio 7
 WHERE NOT EXISTS (
-    SELECT *
-    FROM ParticipationEvent pe_hbo
-    JOIN EventParticulier e_hbo ON pe_hbo.eventId = e_hbo.id
-    WHERE pe_hbo.userId = u.id
-    AND e_hbo.organisateur = 110
-)
-AND NOT EXISTS (
-    SELECT *
-    FROM EventParticulier e_netflix
-    WHERE e_netflix.organisateur = 7
+    SELECT e.id FROM EventParticulier e
+    WHERE e.organisateur = 7
     AND NOT EXISTS (
-        SELECT *
-        FROM ParticipationEvent pe_netflix
-        WHERE pe_netflix.id = u.id
-        AND pe_netflix.eventId = e_netflix.id
+        SELECT pe.userId
+        FROM ParticipationEvent pe
+        WHERE pe.eventId = e.id
+        AND pe.userId = u.id
     )
+)
+-- Exclure les utilisateurs qui ont participé à des évent du studio 130
+AND NOT EXISTS (
+    SELECT pe.userId
+    FROM ParticipationEvent pe
+    JOIN EventParticulier e ON pe.eventId = e.id
+    WHERE e.organisateur = 130
+    AND pe.userId = u.id
 );
 
 
 SELECT u.id, u.username
 FROM Users u
-JOIN ParticipationEvent pe_netflix ON u.id = pe_netflix.id
-JOIN EventParticulier e_netflix ON pe_netflix.eventId = e_netflix.eventId
-WHERE e_netflix.organisateur = 7
+JOIN ParticipationEvent pe ON u.id = pe.userId
+JOIN EventParticulier e ON pe.eventId = e.id
+WHERE e.organisateur = 7
 GROUP BY u.id, u.username
-HAVING COUNT(pe_netflix.eventId) = (
-    SELECT COUNT(e_netflix_inner.eventId)
-    FROM EventParticulier e_netflix_inner
-    WHERE e_netflix_inner.nom = 7
+HAVING COUNT(DISTINCT e.id) = (
+    SELECT COUNT(DISTINCT e.id)
+    FROM EventParticulier e
+    WHERE e.organisateur = 7
 )
 AND u.id NOT IN (
-    SELECT pe_hbo.id
-    FROM ParticipationEvent pe_hbo
-    JOIN EventParticulier e_hbo ON pe_hbo.id_evenement = e_hbo.id_evenement
-    WHERE s_hbo.organisateur = 110
+    SELECT pe.userId
+    FROM ParticipationEvent pe
+    JOIN EventParticulier e ON pe.eventId = e.id
+    WHERE e.organisateur = 130
 );
 
 
