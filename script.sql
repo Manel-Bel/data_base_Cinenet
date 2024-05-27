@@ -52,3 +52,41 @@ EXECUTE recherche_events_avenir_interesse(:user_id);
 \prompt 'Tapez l\'id de l\'user -> ' user_id
 -- ---> execution
 EXECUTE recherche_events_ami(:user_id);
+
+-- ------------------------------------------------------------
+-- créer une nouvelle discussion dans une catégorie spécifique
+-- ---> la saisie dans le prompt
+\prompt 'Tapez l\'ID de l\'auteur -> ' auteurId
+\prompt 'Tapez le titre de la discussion -> ' titreDiscussion
+\prompt 'Tapez la description de la discussion -> ' descriptionDiscussion
+\prompt 'Tapez l\'ID de la catégorie -> ' categorieId
+-- ---> execution
+EXECUTE creer_discussion (:auteurId, :titreDiscussion, :descriptionDiscussion, :categorieId);
+
+
+-- -------------------------------------------
+-- Publier une Publication
+-- ---> la saisie dans le prompt
+\prompt 'Tapez l\'ID de l\'auteur -> ' auteurId
+\prompt 'Tapez l\'ID de la discussion -> ' discussionId
+\prompt 'Tapez le titre de la publication -> ' titrePublication
+\prompt 'Tapez le contenu de la publication -> ' contenuPublication
+\prompt 'Tapez l\'ID de la publication parente (0 si aucune) -> ' parentId
+
+-- ---> execution
+EXECUTE creer_publication (:auteurId, :discussionId, :titrePublication, :contenuPublication, :parentId);
+
+
+-- ----------------------------
+-- creation d'un Événement
+\prompt 'Tapez l\'ID de l\'auteur -> ' auteurId
+\prompt 'Tapez le nom de l\'événement -> ' nomEvent
+\prompt 'Tapez la date de l\'événement (YYYY-MM-DD) -> ' dateEvent
+\prompt 'Tapez le lieu de l\'événement -> ' lieuEvent
+\prompt 'Tapez le nombre de places disponibles -> ' nbPlaceDispo
+\prompt 'Tapez l\'ID de l\'organisateur -> ' organisateurId
+\prompt 'Tapez les liens web (séparés par des virgules) -> ' liensWeb
+
+-- ---> execution
+EXECUTE creer_evenement (:auteurId, :nomEvent, :dateEvent, :lieuEvent, :nbPlaceDispo, :organisateurId, string_to_array(:liensWeb, ','));
+

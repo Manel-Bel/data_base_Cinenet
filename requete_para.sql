@@ -82,3 +82,22 @@ WHERE e.id IN (
         )
     )
 ;
+
+-- ------------------------------------------------------------
+-- créer une nouvelle discussion dans une catégorie spécifique
+PREPARE creer_discussion(INTEGER, VARCHAR, TEXT,INTEGER) AS 
+INSERT INTO Discussion (auteur, titre, description, categorieId)
+VALUES ($1, $2, $3, $4);
+
+-- -------------------------------------------
+-- Publier une Publication
+PREPARE publier_publication(INTEGER, INTEGER, VARCHAR, TEXT, INTEGER) AS
+INSERT INTO Publication (auteur, discussionId, titre, contenu, parentId)
+VALUES ($1, $2, $3, $4, NULLIF($5, 0));
+
+
+-- ----------------------------
+-- creation d'un Événement
+PREPARE creer_event (INTEGER, VARCHAR, DATE, VARCHAR, INTEGER, INTEGER, TEXT[]) AS
+INSERT INTO EventParticulier (auteur, nomEvent, dateEvent, lieuEvent, nbPlaceDispo, organisateur, liens_web)
+VALUES ($1, $2, $3, $4, $5, $6, $7);
