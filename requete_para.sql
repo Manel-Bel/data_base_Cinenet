@@ -91,7 +91,7 @@ VALUES ($1, $2, $3, $4);
 
 -- -------------------------------------------
 -- Publier une Publication
-PREPARE publier_publication(INTEGER, INTEGER, VARCHAR, TEXT, INTEGER) AS
+PREPARE creer_publication(INTEGER, INTEGER, VARCHAR, TEXT, INTEGER) AS
 INSERT INTO Publication (auteur, discussionId, titre, contenu, parentId)
 VALUES ($1, $2, $3, $4, NULLIF($5, 0));
 
